@@ -1,10 +1,10 @@
 import {
   Entity,
+  PrimaryColumn,
   Column,
   OneToOne,
   JoinColumn,
   UpdateDateColumn,
-  PrimaryColumn,
 } from 'typeorm';
 import { Venue } from './venue.entity';
 
@@ -24,10 +24,10 @@ export enum VibeType {
 
 @Entity('venue_live_state')
 export class VenueLiveState {
-  @PrimaryColumn('uuid', { name: 'venue_id' })
+  @PrimaryColumn({ name: 'venue_id', type: 'uuid' })
   venueId: string;
 
-  @OneToOne(() => Venue, { onDelete: 'CASCADE' })
+  @OneToOne(() => Venue, (venue) => venue.liveState, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'venue_id' })
   venue: Venue;
 

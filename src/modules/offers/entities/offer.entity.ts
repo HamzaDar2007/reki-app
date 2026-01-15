@@ -3,13 +3,15 @@ import {
   PrimaryGeneratedColumn,
   Column,
   ManyToOne,
+  OneToMany,
   CreateDateColumn,
   UpdateDateColumn,
   Index,
   JoinColumn,
 } from 'typeorm';
-import { Venue } from '../venues/venue.entity';
-import { BusynessLevel } from '../venues/venue-live-state.entity';
+import { Venue } from '../../venues/entities/venue.entity';
+import { BusynessLevel } from '../../venues/entities/venue-live-state.entity';
+import { OfferRedemption } from './offer-redemption.entity';
 
 export enum OfferType {
   PERCENT_OFF = 'PERCENT_OFF',
@@ -26,6 +28,7 @@ export class Offer {
 
   @ManyToOne(() => Venue, (venue) => venue.offers, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'venue_id' })
+  @Index()
   venue: Venue;
 
   @Column({ length: 160 })
@@ -37,18 +40,24 @@ export class Offer {
   @Column({ name: 'offer_type', type: 'enum', enum: OfferType })
   offerType: OfferType;
 
-  @Column({ name: 'min_busyness', type: 'enum', enum: BusynessLevel, default: BusynessLevel.QUIET })
+  @Column({
+    name: 'min_busyness',
+    type: 'enum',
+    enum: BusynessLevel,
+    default: BusynessLevel.QUIET,
+  })
   minBusyness: BusynessLevel;
 
-  @Index()
   @Column({ name: 'starts_at', type: 'timestamptz' })
+  @Index()
   startsAt: Date;
 
-  @Index()
   @Column({ name: 'ends_at', type: 'timestamptz' })
+  @Index()
   endsAt: Date;
 
   @Column({ name: 'is_active', default: true })
+  @Index()
   isActive: boolean;
 
   @Column({ name: 'view_count', default: 0 })
@@ -59,6 +68,9 @@ export class Offer {
 
   @Column({ name: 'redeem_count', default: 0 })
   redeemCount: number;
+
+  @OneToMany(() => OfferRedemption, (redemption) => redemption.offer)
+  redemptions: OfferRedemption[];
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;

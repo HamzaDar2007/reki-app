@@ -6,6 +6,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   Index,
+  JoinColumn,
 } from 'typeorm';
 import { Venue } from './venue.entity';
 import { VibeType } from './venue-live-state.entity';
@@ -16,7 +17,10 @@ export class VenueVibeSchedule {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => Venue, (venue) => venue.vibeSchedules, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Venue, (venue) => venue.vibeSchedules, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'venue_id' })
   venue: Venue;
 
   @Column({ name: 'day_of_week', type: 'smallint' })
@@ -35,6 +39,7 @@ export class VenueVibeSchedule {
   priority: number;
 
   @Column({ name: 'is_active', default: true })
+  @Index()
   isActive: boolean;
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })

@@ -1,0 +1,193 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2024-01-01T00:00:00.000Z",
+  "__export_source": "insomnia.desktop.app:v2023.5.8",
+  "resources": [
+    {
+      "_id": "req_cities_all",
+      "parentId": "fld_cities",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "url": "{{ _.baseUrl }}/cities",
+      "name": "Get All Cities",
+      "description": "Get all cities (Manchester only for MVP)",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": -1704067200000,
+      "_type": "request"
+    },
+    {
+      "_id": "req_venues_by_city",
+      "parentId": "fld_venues",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "url": "{{ _.baseUrl }}/venues",
+      "name": "Get Venues by City",
+      "description": "Get all venues in Manchester",
+      "method": "GET",
+      "body": {},
+      "parameters": [
+        {
+          "id": "pair_cityId",
+          "name": "cityId",
+          "value": "{{ _.manchesterCityId }}",
+          "description": "Manchester city ID"
+        }
+      ],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": -1704067200000,
+      "_type": "request"
+    },
+    {
+      "_id": "req_venue_details",
+      "parentId": "fld_venues",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "url": "{{ _.baseUrl }}/venues/{{ _.venueId }}",
+      "name": "Get Venue Details",
+      "description": "Get specific venue with live state",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": -1704067100000,
+      "_type": "request"
+    },
+    {
+      "_id": "req_update_live_state",
+      "parentId": "fld_venues",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "url": "{{ _.baseUrl }}/venues/{{ _.venueId }}/live-state",
+      "name": "Update Live State (Demo)",
+      "description": "Update venue busyness and vibe for demo",
+      "method": "PATCH",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"busyness\": \"BUSY\",\n  \"vibe\": \"PARTY\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704067000000,
+      "_type": "request"
+    },
+    {
+      "_id": "req_venue_offers",
+      "parentId": "fld_offers",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "url": "{{ _.baseUrl }}/venues/{{ _.venueId }}/offers",
+      "name": "Get Venue Offers",
+      "description": "Get available offers for venue based on current busyness",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": -1704067200000,
+      "_type": "request"
+    },
+    {
+      "_id": "req_redeem_offer",
+      "parentId": "fld_offers",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "url": "{{ _.baseUrl }}/offers/redeem",
+      "name": "Redeem Offer (Demo)",
+      "description": "Simulate offer redemption",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"offerId\": \"{{ _.offerId }}\",\n  \"source\": \"DEMO\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704067100000,
+      "_type": "request"
+    },
+    {
+      "_id": "fld_cities",
+      "parentId": "wrk_reki",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "name": "Cities",
+      "description": "Manchester city endpoints",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": -1704067200000,
+      "_type": "request_group"
+    },
+    {
+      "_id": "fld_venues",
+      "parentId": "wrk_reki",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "name": "Venues",
+      "description": "Venue discovery and live state endpoints",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": -1704067100000,
+      "_type": "request_group"
+    },
+    {
+      "_id": "fld_offers",
+      "parentId": "wrk_reki",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "name": "Offers",
+      "description": "Venue offers and redemption endpoints",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": -1704067000000,
+      "_type": "request_group"
+    },
+    {
+      "_id": "wrk_reki",
+      "parentId": null,
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "name": "REKI MVP API",
+      "description": "Week 1 & 2 Manchester venue discovery API",
+      "scope": "collection",
+      "_type": "workspace"
+    },
+    {
+      "_id": "env_base",
+      "parentId": "wrk_reki",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "name": "Base Environment",
+      "data": {
+        "baseUrl": "http://localhost:3000",
+        "manchesterCityId": "",
+        "venueId": "",
+        "offerId": ""
+      },
+      "dataPropertyOrder": {
+        "&": ["baseUrl", "manchesterCityId", "venueId", "offerId"]
+      },
+      "color": null,
+      "isPrivate": false,
+      "metaSortKey": 1704067200000,
+      "_type": "environment"
+    }
+  ]
+}

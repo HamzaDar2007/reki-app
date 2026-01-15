@@ -7,7 +7,7 @@ import {
   OneToMany,
   Index,
 } from 'typeorm';
-import { Venue } from '../venues/venue.entity';
+import { Venue } from '../../venues/entities/venue.entity';
 
 @Entity('cities')
 @Index(['name', 'countryCode'], { unique: true })
@@ -27,10 +27,22 @@ export class City {
   @Column({ name: 'is_active', default: true })
   isActive: boolean;
 
-  @Column({ name: 'center_lat', type: 'numeric', precision: 9, scale: 6, nullable: true })
+  @Column({
+    name: 'center_lat',
+    type: 'numeric',
+    precision: 9,
+    scale: 6,
+    nullable: true,
+  })
   centerLat?: number;
 
-  @Column({ name: 'center_lng', type: 'numeric', precision: 9, scale: 6, nullable: true })
+  @Column({
+    name: 'center_lng',
+    type: 'numeric',
+    precision: 9,
+    scale: 6,
+    nullable: true,
+  })
   centerLng?: number;
 
   @OneToMany(() => Venue, (venue) => venue.city)

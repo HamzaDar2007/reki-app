@@ -1,7 +1,7 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class CreateRekiWeek1Week2Tables1700000000001 implements MigrationInterface {
-  name = "CreateRekiWeek1Week2Tables1700000000001";
+  name = 'CreateRekiWeek1Week2Tables1700000000001';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Extensions (optional, but useful)
@@ -79,8 +79,12 @@ export class CreateRekiWeek1Week2Tables1700000000001 implements MigrationInterfa
       )
     `);
 
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_venues_city_id ON venues(city_id)`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_venues_category ON venues(category)`);
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_venues_city_id ON venues(city_id)`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_venues_category ON venues(category)`,
+    );
 
     // 3) Venue Live State (Week 2: busyness + vibe, UI-independent)
     await queryRunner.query(`
@@ -113,8 +117,12 @@ export class CreateRekiWeek1Week2Tables1700000000001 implements MigrationInterfa
       )
     `);
 
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_vibe_schedule_venue_day ON venue_vibe_schedule(venue_id, day_of_week)`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_vibe_schedule_active ON venue_vibe_schedule(is_active)`);
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_vibe_schedule_venue_day ON venue_vibe_schedule(venue_id, day_of_week)`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_vibe_schedule_active ON venue_vibe_schedule(is_active)`,
+    );
 
     // 5) Offers (Week 2: offer rules & availability)
     await queryRunner.query(`
@@ -147,9 +155,15 @@ export class CreateRekiWeek1Week2Tables1700000000001 implements MigrationInterfa
       )
     `);
 
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_offers_venue_id ON offers(venue_id)`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_offers_active ON offers(is_active)`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_offers_time ON offers(starts_at, ends_at)`);
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_offers_venue_id ON offers(venue_id)`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_offers_active ON offers(is_active)`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_offers_time ON offers(starts_at, ends_at)`,
+    );
 
     // 6) Optional: Offer redemptions (SIMULATED demo, no auth required)
     // This is useful for demo stability and testing.
@@ -163,8 +177,12 @@ export class CreateRekiWeek1Week2Tables1700000000001 implements MigrationInterfa
       )
     `);
 
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_redemptions_offer_id ON offer_redemptions(offer_id)`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_redemptions_venue_id ON offer_redemptions(venue_id)`);
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_redemptions_offer_id ON offer_redemptions(offer_id)`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_redemptions_venue_id ON offer_redemptions(venue_id)`,
+    );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {

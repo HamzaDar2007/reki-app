@@ -1,0 +1,213 @@
+{
+  "info": {
+    "name": "REKI MVP API - Week 1 & 2",
+    "description": "Manchester venue discovery & offers API testing collection",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Cities",
+      "item": [
+        {
+          "name": "Get All Cities",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/cities",
+              "host": ["{{baseUrl}}"],
+              "path": ["cities"]
+            }
+          }
+        },
+        {
+          "name": "Get Manchester",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/cities/manchester",
+              "host": ["{{baseUrl}}"],
+              "path": ["cities", "manchester"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Venues",
+      "item": [
+        {
+          "name": "Get Venues by City",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/venues?cityId={{manchesterCityId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["venues"],
+              "query": [
+                {
+                  "key": "cityId",
+                  "value": "{{manchesterCityId}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Venue Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/venues/{{venueId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["venues", "{{venueId}}"]
+            }
+          }
+        },
+        {
+          "name": "Update Venue Live State (Demo)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"busyness\": \"BUSY\",\n  \"vibe\": \"PARTY\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/venues/{{venueId}}/live-state",
+              "host": ["{{baseUrl}}"],
+              "path": ["venues", "{{venueId}}", "live-state"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Offers",
+      "item": [
+        {
+          "name": "Get Venue Offers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/venues/{{venueId}}/offers",
+              "host": ["{{baseUrl}}"],
+              "path": ["venues", "{{venueId}}", "offers"]
+            }
+          }
+        },
+        {
+          "name": "Create Offer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"venueId\": \"{{venueId}}\",\n  \"title\": \"Happy Hour Special\",\n  \"description\": \"50% off all cocktails\",\n  \"offerType\": \"PERCENT_OFF\",\n  \"minBusyness\": \"QUIET\",\n  \"startsAt\": \"2024-01-01T17:00:00Z\",\n  \"endsAt\": \"2024-12-31T20:00:00Z\",\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/offers",
+              "host": ["{{baseUrl}}"],
+              "path": ["offers"]
+            }
+          }
+        },
+        {
+          "name": "Redeem Offer (Demo)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"offerId\": \"{{offerId}}\",\n  \"source\": \"DEMO\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/offers/redeem",
+              "host": ["{{baseUrl}}"],
+              "path": ["offers", "redeem"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Demo Control",
+      "item": [
+        {
+          "name": "Friday Evening Simulation",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/demo/friday-evening",
+              "host": ["{{baseUrl}}"],
+              "path": ["demo", "friday-evening"]
+            }
+          }
+        },
+        {
+          "name": "Quiet Monday Simulation",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/demo/quiet-monday",
+              "host": ["{{baseUrl}}"],
+              "path": ["demo", "quiet-monday"]
+            }
+          }
+        },
+        {
+          "name": "Mixed Busyness Simulation",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/demo/mixed-busyness",
+              "host": ["{{baseUrl}}"],
+              "path": ["demo", "mixed-busyness"]
+            }
+          }
+        },
+        {
+          "name": "Reset Demo",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/demo/reset",
+              "host": ["{{baseUrl}}"],
+              "path": ["demo", "reset"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

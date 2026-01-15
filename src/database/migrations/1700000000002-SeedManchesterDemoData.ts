@@ -1,11 +1,11 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class SeedManchesterDemoData1700000000002 implements MigrationInterface {
-  name = "SeedManchesterDemoData1700000000002";
+  name = 'SeedManchesterDemoData1700000000002';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     // 1) Insert Manchester
-    const manchester = await queryRunner.query(`
+    const manchester = (await queryRunner.query(`
       INSERT INTO cities (name, country_code, timezone, is_active, center_lat, center_lng)
       VALUES ('Manchester', 'GB', 'Europe/London', true, 53.480759, -2.242631)
       ON CONFLICT (name, country_code) DO UPDATE SET
@@ -15,20 +15,20 @@ export class SeedManchesterDemoData1700000000002 implements MigrationInterface {
         center_lng = EXCLUDED.center_lng,
         updated_at = now()
       RETURNING id
-    `);
+    `)) as { id: string }[];
 
     const cityId = manchester?.[0]?.id;
-    if (!cityId) throw new Error("Failed to seed Manchester city");
+    if (!cityId) throw new Error('Failed to seed Manchester city');
 
     // 2) Insert sample venues (demo-friendly, can rename later)
-    const venues = await queryRunner.query(`
+    const venues = (await queryRunner.query(`
       INSERT INTO venues (city_id, name, category, address, postcode, lat, lng, cover_image_url, description, is_active)
       VALUES
         ('${cityId}', 'The Alchemist', 'BAR', 'Spinningfields, Manchester', 'M3', 53.4797, -2.2520, null, 'Cocktail bar with live vibe', true),
         ('${cityId}', 'Albert''s Schloss', 'BAR', 'Peter St, Manchester', 'M2', 53.4774, -2.2452, null, 'Beer hall + late-night energy', true),
         ('${cityId}', 'Northern Monk', 'BAR', 'Hatch, Oxford Rd', 'M1', 53.4713, -2.2366, null, 'Chill craft beer spot', true)
       RETURNING id
-    `);
+    `)) as { id: string }[];
 
     // 3) Create initial live states
     for (const v of venues) {
