@@ -71,4 +71,62 @@ export class VenuesService {
       .orderBy('venue.name', 'ASC')
       .getMany();
   }
+
+  /**
+   * Calculate distance between two coordinates using Haversine formula
+   * @param lat1 Latitude of point 1
+   * @param lng1 Longitude of point 1
+   * @param lat2 Latitude of point 2
+   * @param lng2 Longitude of point 2
+   * @returns Distance in kilometers
+   */
+  calculateDistance(
+    lat1: number,
+    lng1: number,
+    lat2: number,
+    lng2: number,
+  ): number {
+    const R = 6371; // Earth's radius in kilometers
+    const dLat = this.toRadians(lat2 - lat1);
+    const dLng = this.toRadians(lng2 - lng1);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(this.toRadians(lat1)) *
+        Math.cos(this.toRadians(lat2)) *
+        Math.sin(dLng / 2) *
+        Math.sin(dLng / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  }
+
+  private toRadians(degrees: number): number {
+    return degrees * (Math.PI / 180);
+  }
+
+  /**
+   * Search venues by name or description
+   * @param query Search query string
+   * @param cityId Optional city filter
+   * @returns Matching venues
+   */
+  async search(query: string, cityId?: string): Promise<Venue[]> {
+    const queryBuilder = this.venueRepo
+      .createQueryBuilder('venue')
+      .leftJoinAndSelect('venue.liveState', 'liveState')
+      .leftJoinAndSelect('venue.city', 'city')
+      .leftJoinAndSelect('venue.offers', 'offers')
+      .where('venue.isActive = :isActive', { isActive: true })
+      .andWhere(
+        '(LOWER(venue.name) LIKE LOWER(:query) OR LOWER(venue.description) LIKE LOWER(:query))',
+        { query: `%${query}%` },
+      );
+
+    if (cityId) {
+      queryBuilder.andWhere('venue.city_id = :cityId', { cityId });
+    }
+
+    return queryBuilder
+      .orderBy('venue.name', 'ASC')
+      .getMany();
+  }
 }

@@ -1,7 +1,7 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class ExpandedManchesterSeedData1700000000003 implements MigrationInterface {
-  name = "ExpandedManchesterSeedData1700000000003";
+  name = 'ExpandedManchesterSeedData1700000000003';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Get Manchester city ID
@@ -10,7 +10,7 @@ export class ExpandedManchesterSeedData1700000000003 implements MigrationInterfa
     `);
 
     if (!manchester || manchester.length === 0) {
-      throw new Error("Manchester city not found - run base seed first");
+      throw new Error('Manchester city not found - run base seed first');
     }
 
     const cityId = manchester[0].id;
@@ -46,12 +46,12 @@ export class ExpandedManchesterSeedData1700000000003 implements MigrationInterfa
     for (const venue of allVenues) {
       // Clear existing schedules
       await queryRunner.query(`
-        DELETE FROM venue_vibe_schedule WHERE "venueId" = '${venue.id}'
+        DELETE FROM venue_vibe_schedule WHERE venue_id = '${venue.id}'
       `);
 
       // Add comprehensive weekly schedule
       await queryRunner.query(`
-        INSERT INTO venue_vibe_schedule ("venueId", day_of_week, start_time, end_time, vibe, priority, is_active)
+        INSERT INTO venue_vibe_schedule (venue_id, day_of_week, start_time, end_time, vibe, priority, is_active)
         VALUES
           -- Monday (1) - Quiet start
           ('${venue.id}', 1, '17:00', '20:00', 'CHILL', 1, true),
@@ -74,14 +74,12 @@ export class ExpandedManchesterSeedData1700000000003 implements MigrationInterfa
           -- Friday (5) - Full progression
           ('${venue.id}', 5, '17:00', '19:00', 'CHILL', 1, true),
           ('${venue.id}', 5, '19:00', '22:00', 'SOCIAL', 2, true),
-          ('${venue.id}', 5, '22:00', '01:00', 'PARTY', 3, true),
-          ('${venue.id}', 5, '01:00', '03:00', 'LATE_NIGHT', 4, true),
+          ('${venue.id}', 5, '22:00', '23:59', 'PARTY', 3, true),
           
           -- Saturday (6) - Peak night
           ('${venue.id}', 6, '16:00', '19:00', 'CHILL', 1, true),
           ('${venue.id}', 6, '19:00', '21:00', 'SOCIAL', 2, true),
-          ('${venue.id}', 6, '21:00', '00:00', 'PARTY', 3, true),
-          ('${venue.id}', 6, '00:00', '04:00', 'LATE_NIGHT', 4, true),
+          ('${venue.id}', 6, '21:00', '23:59', 'PARTY', 3, true),
           
           -- Sunday (0) - Recovery day
           ('${venue.id}', 0, '12:00', '18:00', 'CHILL', 1, true),

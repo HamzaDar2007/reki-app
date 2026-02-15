@@ -2,6 +2,7 @@ import {
   Injectable,
   BadRequestException,
   NotFoundException,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, MoreThanOrEqual, LessThanOrEqual } from 'typeorm';
@@ -13,9 +14,12 @@ import {
 } from '../venues/entities/venue-live-state.entity';
 import { CreateOfferDto } from './dto/create-offer.dto';
 import { RedeemOfferDto } from './dto/redeem-offer.dto';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class OffersService {
+  private readonly logger = new Logger(OffersService.name);
+  
   // Busyness level ranking for correct comparison
   private readonly busynessRanking = {
     [BusynessLevel.QUIET]: 1,
@@ -30,6 +34,7 @@ export class OffersService {
     private readonly redemptionRepo: Repository<OfferRedemption>,
     @InjectRepository(VenueLiveState)
     private readonly liveStateRepo: Repository<VenueLiveState>,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async create(dto: CreateOfferDto): Promise<Offer> {
@@ -49,7 +54,41 @@ export class OffersService {
       isActive: dto.isActive ?? true,
     });
 
-    return this.offerRepo.save(offer);
+    const savedOffer = await this.offerRepo.save(offer);
+
+    this.logger.log(`=== OFFER CREATED: ${savedOffer.id} ===`);
+
+    // Load venue details for notification
+    const fullOffer = await this.offerRepo.findOne({
+      where: { id: savedOffer.id },
+      relations: ['venue'],
+    });
+
+    this.logger.log(`Full offer loaded: ${fullOffer ? 'YES' : 'NO'}`);
+    if (fullOffer) {
+      this.logger.log(`Offer details: isActive=${fullOffer.isActive}, startsAt=${fullOffer.startsAt}, now=${new Date()}`);
+    }
+
+    // Trigger notification if offer is active and starts now or in the future
+    if (fullOffer && fullOffer.isActive && fullOffer.startsAt <= new Date()) {
+      this.logger.log('Triggering notification...');
+      try {
+        await this.notificationsService.notifyOfferAvailable(
+          fullOffer.id,
+          fullOffer.venue.id,
+          fullOffer.venue.name,
+          fullOffer.title,
+          fullOffer.description || '',
+        );
+        this.logger.log('Notification triggered successfully');
+      } catch (error) {
+        this.logger.error(`Failed to trigger notification: ${error.message}`);
+      }
+    } else {
+      this.logger.log('Skipping notification (conditions not met)');
+    }
+
+    return savedOffer;
   }
 
   async findById(id: string): Promise<Offer> {

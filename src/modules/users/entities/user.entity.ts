@@ -22,6 +22,15 @@ export class User {
   @Column()
   passwordHash: string;
 
+  @Column({ nullable: true })
+  refreshToken?: string;
+
+  @Column({ nullable: true })
+  passwordResetToken?: string;
+
+  @Column({ nullable: true, type: 'timestamptz' })
+  passwordResetExpires?: Date;
+
   @Column({ default: true })
   isActive: boolean;
 

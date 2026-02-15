@@ -4,24 +4,72 @@ export class AddVenueOwner1768412173209 implements MigrationInterface {
   name = 'AddVenueOwner1768412173209';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(
-      `ALTER TABLE "venue_vibe_schedule" DROP CONSTRAINT "FK_a7fbcc79ff37ee57058e3c3076c"`,
-    );
-    await queryRunner.query(
-      `ALTER TABLE "offer_redemptions" DROP CONSTRAINT "FK_a233b4e28f1832eb62fbfe206b7"`,
-    );
-    await queryRunner.query(
-      `ALTER TABLE "offer_redemptions" DROP CONSTRAINT "FK_c6a4da5b5b49722004a7178267d"`,
-    );
-    await queryRunner.query(
-      `DROP INDEX "public"."IDX_710149dbe5c315f74033701543"`,
-    );
-    await queryRunner.query(
-      `DROP INDEX "public"."IDX_bb28c67fad9c46fac68d84a8ae"`,
-    );
-    await queryRunner.query(
-      `ALTER TABLE "venue_vibe_schedule" RENAME COLUMN "venueId" TO "venue_id"`,
-    );
+    // Check if constraints exist before dropping them
+    const constraintExists = await queryRunner.query(`
+      SELECT constraint_name FROM information_schema.table_constraints 
+      WHERE table_name = 'venue_vibe_schedule' AND constraint_name = 'FK_a7fbcc79ff37ee57058e3c3076c'
+    `);
+
+    if (constraintExists.length > 0) {
+      await queryRunner.query(
+        `ALTER TABLE "venue_vibe_schedule" DROP CONSTRAINT "FK_a7fbcc79ff37ee57058e3c3076c"`,
+      );
+    }
+
+    const offerConstraint1 = await queryRunner.query(`
+      SELECT constraint_name FROM information_schema.table_constraints 
+      WHERE table_name = 'offer_redemptions' AND constraint_name = 'FK_a233b4e28f1832eb62fbfe206b7'
+    `);
+
+    if (offerConstraint1.length > 0) {
+      await queryRunner.query(
+        `ALTER TABLE "offer_redemptions" DROP CONSTRAINT "FK_a233b4e28f1832eb62fbfe206b7"`,
+      );
+    }
+
+    const offerConstraint2 = await queryRunner.query(`
+      SELECT constraint_name FROM information_schema.table_constraints 
+      WHERE table_name = 'offer_redemptions' AND constraint_name = 'FK_c6a4da5b5b49722004a7178267d'
+    `);
+
+    if (offerConstraint2.length > 0) {
+      await queryRunner.query(
+        `ALTER TABLE "offer_redemptions" DROP CONSTRAINT "FK_c6a4da5b5b49722004a7178267d"`,
+      );
+    }
+
+    // Check if indexes exist before dropping them
+    const index1 = await queryRunner.query(`
+      SELECT indexname FROM pg_indexes WHERE tablename = 'venue_vibe_schedule' AND indexname = 'IDX_710149dbe5c315f74033701543'
+    `);
+
+    if (index1.length > 0) {
+      await queryRunner.query(
+        `DROP INDEX "public"."IDX_710149dbe5c315f74033701543"`,
+      );
+    }
+
+    const index2 = await queryRunner.query(`
+      SELECT indexname FROM pg_indexes WHERE tablename = 'venues' AND indexname = 'IDX_bb28c67fad9c46fac68d84a8ae'
+    `);
+
+    if (index2.length > 0) {
+      await queryRunner.query(
+        `DROP INDEX "public"."IDX_bb28c67fad9c46fac68d84a8ae"`,
+      );
+    }
+
+    // Check if column exists before renaming
+    const columnExists = await queryRunner.query(`
+      SELECT column_name FROM information_schema.columns 
+      WHERE table_name = 'venue_vibe_schedule' AND column_name = 'venueId'
+    `);
+
+    if (columnExists.length > 0) {
+      await queryRunner.query(
+        `ALTER TABLE "venue_vibe_schedule" RENAME COLUMN "venueId" TO "venue_id"`,
+      );
+    }
     await queryRunner.query(
       `CREATE TYPE "public"."user_preferences_minbusyness_enum" AS ENUM('QUIET', 'MODERATE', 'BUSY')`,
     );
@@ -31,19 +79,61 @@ export class AddVenueOwner1768412173209 implements MigrationInterface {
     await queryRunner.query(
       `CREATE TABLE "users" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "email" character varying NOT NULL, "passwordHash" character varying NOT NULL, "isActive" boolean NOT NULL DEFAULT true, "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "preferencesUserId" uuid, CONSTRAINT "UQ_97672ac88f789774dd47f7c8be3" UNIQUE ("email"), CONSTRAINT "REL_e7728d83d3d1e8f110ab618370" UNIQUE ("preferencesUserId"), CONSTRAINT "PK_a3ffb1c0c8416b9fc6f907b7433" PRIMARY KEY ("id"))`,
     );
-    await queryRunner.query(
-      `ALTER TABLE "offer_redemptions" DROP COLUMN "offerId"`,
-    );
-    await queryRunner.query(
-      `ALTER TABLE "offer_redemptions" DROP COLUMN "venueId"`,
-    );
-    await queryRunner.query(
-      `ALTER TABLE "offer_redemptions" ADD "offer_id" uuid`,
-    );
-    await queryRunner.query(
-      `ALTER TABLE "offer_redemptions" ADD "venue_id" uuid`,
-    );
-    await queryRunner.query(`ALTER TABLE "venues" ADD "owner_id" uuid`);
+
+    // Check if columns exist before dropping them
+    const offerIdColumn = await queryRunner.query(`
+      SELECT column_name FROM information_schema.columns 
+      WHERE table_name = 'offer_redemptions' AND column_name = 'offerId'
+    `);
+
+    if (offerIdColumn.length > 0) {
+      await queryRunner.query(
+        `ALTER TABLE "offer_redemptions" DROP COLUMN "offerId"`,
+      );
+    }
+
+    const venueIdColumn = await queryRunner.query(`
+      SELECT column_name FROM information_schema.columns 
+      WHERE table_name = 'offer_redemptions' AND column_name = 'venueId'
+    `);
+
+    if (venueIdColumn.length > 0) {
+      await queryRunner.query(
+        `ALTER TABLE "offer_redemptions" DROP COLUMN "venueId"`,
+      );
+    }
+
+    // Check if columns don't exist before adding them
+    const offerIdSnakeColumn = await queryRunner.query(`
+      SELECT column_name FROM information_schema.columns 
+      WHERE table_name = 'offer_redemptions' AND column_name = 'offer_id'
+    `);
+
+    if (offerIdSnakeColumn.length === 0) {
+      await queryRunner.query(
+        `ALTER TABLE "offer_redemptions" ADD "offer_id" uuid`,
+      );
+    }
+
+    const venueIdSnakeColumn = await queryRunner.query(`
+      SELECT column_name FROM information_schema.columns 
+      WHERE table_name = 'offer_redemptions' AND column_name = 'venue_id'
+    `);
+
+    if (venueIdSnakeColumn.length === 0) {
+      await queryRunner.query(
+        `ALTER TABLE "offer_redemptions" ADD "venue_id" uuid`,
+      );
+    }
+
+    const ownerIdColumn = await queryRunner.query(`
+      SELECT column_name FROM information_schema.columns 
+      WHERE table_name = 'venues' AND column_name = 'owner_id'
+    `);
+
+    if (ownerIdColumn.length === 0) {
+      await queryRunner.query(`ALTER TABLE "venues" ADD "owner_id" uuid`);
+    }
     await queryRunner.query(
       `CREATE INDEX "IDX_d3c14feacd62255a1aa4f4e624" ON "venue_vibe_schedule" ("is_active") `,
     );

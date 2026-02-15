@@ -20,4 +20,16 @@ export class UserPreferences {
 
   @Column({ type: 'simple-array', nullable: true })
   preferredVibes: VibeType[];
+
+  @Column({ name: 'notifications_enabled', default: true })
+  notificationsEnabled: boolean;
+
+  @Column({ name: 'email_notifications', default: true })
+  emailNotifications: boolean;
+
+  @Column({ name: 'offer_notifications', default: true })
+  offerNotifications: boolean;
+
+  @Column({ name: 'busyness_notifications', default: false })
+  busynessNotifications: boolean;
 }

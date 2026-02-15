@@ -7,10 +7,11 @@ import { VenueVibeScheduleService } from './venue-vibe-schedule.service';
 import { Venue } from './entities/venue.entity';
 import { VenueLiveState } from './entities/venue-live-state.entity';
 import { VenueVibeSchedule } from './entities/venue-vibe-schedule.entity';
+import { UserPreferences } from '../users/entities/user-preferences.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Venue, VenueLiveState, VenueVibeSchedule]),
+    TypeOrmModule.forFeature([Venue, VenueLiveState, VenueVibeSchedule, UserPreferences]),
   ],
   controllers: [VenuesController],
   providers: [VenuesService, VenueLiveStateService, VenueVibeScheduleService],

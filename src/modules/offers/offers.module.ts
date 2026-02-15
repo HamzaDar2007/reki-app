@@ -6,10 +6,12 @@ import { Offer } from './entities/offer.entity';
 import { OfferRedemption } from './entities/offer-redemption.entity';
 import { VenueLiveState } from '../venues/entities/venue-live-state.entity';
 import { VenuesModule } from '../venues/venues.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
     VenuesModule,
+    NotificationsModule,
     TypeOrmModule.forFeature([Offer, OfferRedemption, VenueLiveState]),
   ],
   controllers: [OffersController],

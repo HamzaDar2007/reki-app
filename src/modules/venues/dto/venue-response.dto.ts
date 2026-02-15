@@ -21,6 +21,7 @@ export class VenueResponseDto {
 
   // Additional computed fields
   activeOffersCount: number;
+  distance?: number; // Distance in kilometers from search location
 
   createdAt: Date;
   updatedAt: Date;

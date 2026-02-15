@@ -8,6 +8,7 @@ import {
   Query,
   UseGuards,
   ForbiddenException,
+  Request,
 } from '@nestjs/common';
 import {
   ApiOkResponse,
@@ -28,6 +29,9 @@ import { VibeType } from './entities/venue-live-state.entity';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { GetUser } from '../auth/get-user.decorator';
 import { User } from '../users/entities/user.entity';
+import { Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { UserPreferences } from '../users/entities/user-preferences.entity';
 
 @ApiTags('Venues')
 @Controller('venues')
@@ -36,6 +40,8 @@ export class VenuesController {
     private readonly venuesService: VenuesService,
     private readonly liveStateService: VenueLiveStateService,
     private readonly vibeScheduleService: VenueVibeScheduleService,
+    @InjectRepository(UserPreferences)
+    private readonly userPreferencesRepo: Repository<UserPreferences>,
   ) {}
 
   @Get()
@@ -43,27 +49,60 @@ export class VenuesController {
   @ApiQuery({ name: 'lat', required: false, type: Number })
   @ApiQuery({ name: 'lng', required: false, type: Number })
   @ApiQuery({ name: 'radius', required: false, type: Number })
+  @ApiQuery({ name: 'search', required: false, type: String, description: 'Search venues by name or description' })
   @ApiQuery({ name: 'categories', required: false, type: [String] })
   @ApiQuery({ name: 'minBusyness', required: false })
   @ApiQuery({ name: 'preferredVibes', required: false, type: [String] })
+  @ApiQuery({ name: 'hasOffers', required: false, type: Boolean })
+  @ApiQuery({ name: 'sortBy', required: false, enum: ['distance', 'name', 'busyness', 'offers'] })
+  @ApiQuery({ name: 'usePreferences', required: false, type: Boolean, description: 'Use user preferences if authenticated' })
+  @ApiBearerAuth()
   @ApiOkResponse({ type: [VenueResponseDto] })
   async findVenues(
     @Query('cityId') cityId?: string,
     @Query('lat') lat?: number,
     @Query('lng') lng?: number,
     @Query('radius') radius?: number,
+    @Query('search') search?: string,
     @Query('categories') categories?: string[],
     @Query('minBusyness') minBusyness?: string,
     @Query('preferredVibes') preferredVibes?: string[],
+    @Query('hasOffers') hasOffers?: boolean,
+    @Query('sortBy') sortBy?: 'distance' | 'name' | 'busyness' | 'offers',
+    @Query('usePreferences') usePreferences?: boolean,
+    @Request() req?: any,
   ): Promise<VenueResponseDto[]> {
     let venues: Venue[];
 
-    if (lat && lng) {
+    // Load user preferences if authenticated and requested
+    let userPrefs: UserPreferences | null = null;
+    if (usePreferences && req?.user?.id) {
+      userPrefs = await this.userPreferencesRepo.findOne({
+        where: { userId: req.user.id },
+      });
+    }
+
+    // Use user preferences as defaults if no query params provided
+    if (userPrefs && !categories && userPrefs.preferredCategories) {
+      categories = userPrefs.preferredCategories;
+    }
+    if (userPrefs && !minBusyness && userPrefs.minBusyness) {
+      minBusyness = userPrefs.minBusyness;
+    }
+    if (userPrefs && !preferredVibes && userPrefs.preferredVibes) {
+      preferredVibes = userPrefs.preferredVibes;
+    }
+
+    // Fetch venues
+    if (search) {
+      // Text search by name or description
+      venues = await this.venuesService.search(search, cityId);
+    } else if (lat && lng) {
       venues = await this.venuesService.findNearby(lat, lng, radius || 5);
     } else if (cityId) {
       venues = await this.venuesService.findByCity(cityId);
     } else {
-      throw new Error('Either cityId or lat/lng coordinates are required');
+      throw new Error('Either cityId, search query, or lat/lng coordinates are required');
     }
 
     // Apply preference-based filtering
@@ -73,23 +112,30 @@ export class VenuesController {
     if (minBusyness) {
       venues = venues.filter((v: Venue) => {
         const busynessLevels = ['QUIET', 'MODERATE', 'BUSY'];
-        const currentLevel = busynessLevels.indexOf(v.liveState.busyness);
+        const currentLevel = busynessLevels.indexOf(v.liveState?.busyness || 'QUIET');
         const minLevel = busynessLevels.indexOf(minBusyness);
         return currentLevel >= minLevel;
       });
     }
     if (preferredVibes && preferredVibes.length > 0) {
       venues = venues.filter((v: Venue) =>
-        preferredVibes.includes(v.liveState.vibe),
+        v.liveState?.vibe && preferredVibes.includes(v.liveState.vibe),
       );
     }
+    if (hasOffers !== undefined) {
+      venues = venues.filter((v: Venue) => {
+        const hasActiveOffers = (v.offers || []).some((o) => o.isActive);
+        return hasOffers ? hasActiveOffers : !hasActiveOffers;
+      });
+    }
 
-    return venues.map((v: Venue) => {
+    // Map to response DTOs with distance calculation
+    const venueResponses = venues.map((v: Venue) => {
       const activeOffersCount = (v.offers || []).filter(
         (o) => o.isActive,
       ).length;
 
-      return {
+      const response: VenueResponseDto = {
         id: v.id,
         name: v.name,
         category: v.category,
@@ -107,8 +153,34 @@ export class VenuesController {
         activeOffersCount,
         createdAt: v.createdAt,
         updatedAt: v.updatedAt,
-      } as VenueResponseDto;
+      };
+
+      // Calculate distance if search location provided
+      if (lat && lng && v.lat && v.lng) {
+        response.distance = this.venuesService.calculateDistance(
+          lat,
+          lng,
+          Number(v.lat),
+          Number(v.lng),
+        );
+      }
+
+      return response;
     });
+
+    // Apply sorting
+    if (sortBy === 'distance' && lat && lng) {
+      venueResponses.sort((a, b) => (a.distance || 0) - (b.distance || 0));
+    } else if (sortBy === 'name') {
+      venueResponses.sort((a, b) => a.name.localeCompare(b.name));
+    } else if (sortBy === 'busyness') {
+      const busynessOrder = { QUIET: 0, MODERATE: 1, BUSY: 2 };
+      venueResponses.sort((a, b) => (busynessOrder[b.busyness] || 0) - (busynessOrder[a.busyness] || 0));
+    } else if (sortBy === 'offers') {
+      venueResponses.sort((a, b) => b.activeOffersCount - a.activeOffersCount);
+    }
+
+    return venueResponses;
   }
 
   @Get(':id')

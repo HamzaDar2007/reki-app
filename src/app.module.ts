@@ -10,6 +10,8 @@ import { DemoModule } from './modules/demo/demo.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { UsersModule } from './modules/users/users.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { AutomationModule } from './modules/automation/automation.module';
+import { AnalyticsModule } from './modules/analytics/analytics.module';
 
 @Module({
   imports: [
@@ -34,6 +36,8 @@ import { AuthModule } from './modules/auth/auth.module';
     UsersModule,
     AuthModule,
     NotificationsModule,
+    AutomationModule,
+    AnalyticsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

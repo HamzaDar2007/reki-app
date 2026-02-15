@@ -12,6 +12,7 @@ import { UserPreferences } from './entities/user-preferences.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginDto } from './dto/login.dto';
 import { UpdatePreferencesDto } from './dto/update-preferences.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -85,5 +86,35 @@ export class UsersService {
 
     Object.assign(prefs, dto);
     return this.prefsRepo.save(prefs);
+  }
+
+  async findAll(): Promise<User[]> {
+    return this.userRepo.find({
+      relations: ['preferences'],
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  async update(id: string, dto: UpdateUserDto): Promise<User> {
+    const user = await this.findById(id);
+
+    if (dto.email && dto.email !== user.email) {
+      const existing = await this.userRepo.findOne({
+        where: { email: dto.email },
+      });
+      if (existing) throw new ConflictException('Email already exists');
+      user.email = dto.email;
+    }
+
+    if (dto.isActive !== undefined) {
+      user.isActive = dto.isActive;
+    }
+
+    return this.userRepo.save(user);
+  }
+
+  async delete(id: string): Promise<void> {
+    const user = await this.findById(id);
+    await this.userRepo.remove(user);
   }
 }

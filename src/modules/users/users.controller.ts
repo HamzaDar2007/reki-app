@@ -1,29 +1,40 @@
-import { Controller, Post, Body, Get, Patch, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { Controller, Get, Patch, Delete, Body, Param, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { UsersService } from './users.service';
-import { AuthService } from '../auth/auth.service';
-import { CreateUserDto } from './dto/create-user.dto';
-import { LoginDto } from './dto/login.dto';
 import { UserResponseDto } from './dto/user-response.dto';
-import { UpdatePreferencesDto } from './dto/update-preferences.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { GetUser } from '../auth/get-user.decorator';
-import { User } from './entities/user.entity';
-import { UserPreferences } from './entities/user-preferences.entity';
 
 @ApiTags('users')
 @Controller('users')
 export class UsersController {
-  constructor(
-    private readonly usersService: UsersService,
-    private readonly authService: AuthService,
-  ) {}
+  constructor(private readonly usersService: UsersService) {}
 
-  @Post('register')
-  @ApiOperation({ summary: 'Register a new user' })
-  @ApiResponse({ status: 201, type: UserResponseDto })
-  async register(@Body() dto: CreateUserDto): Promise<UserResponseDto> {
-    const user = await this.usersService.create(dto);
+  @Get()
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get all users' })
+  @ApiResponse({ status: 200, type: [UserResponseDto] })
+  async findAll(): Promise<UserResponseDto[]> {
+    const users = await this.usersService.findAll();
+    return users.map((user) => ({
+      id: user.id,
+      email: user.email,
+      isActive: user.isActive,
+      preferences: user.preferences,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    }));
+  }
+
+  @Get(':id')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get user by ID' })
+  @ApiResponse({ status: 200, type: UserResponseDto })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  async findById(@Param('id') id: string): Promise<UserResponseDto> {
+    const user = await this.usersService.findById(id);
     return {
       id: user.id,
       email: user.email,
@@ -34,38 +45,35 @@ export class UsersController {
     };
   }
 
-  @Post('login')
-  @ApiOperation({ summary: 'Login user' })
-  @ApiResponse({ status: 200, description: 'JWT token' })
-  async login(@Body() dto: LoginDto): Promise<{ access_token: string }> {
-    const user = await this.usersService.login(dto);
-    return this.authService.login(user);
-  }
-
-  @Get('me')
+  @Patch(':id')
   @UseGuards(JwtAuthGuard)
-  @ApiOperation({ summary: 'Get current user profile' })
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update user' })
   @ApiResponse({ status: 200, type: UserResponseDto })
-  async getProfile(@GetUser() user: User): Promise<UserResponseDto> {
-    const fullUser = await this.usersService.findById(user.id);
+  @ApiResponse({ status: 404, description: 'User not found' })
+  async update(
+    @Param('id') id: string,
+    @Body() dto: UpdateUserDto,
+  ): Promise<UserResponseDto> {
+    const user = await this.usersService.update(id, dto);
     return {
-      id: fullUser.id,
-      email: fullUser.email,
-      isActive: fullUser.isActive,
-      preferences: fullUser.preferences,
-      createdAt: fullUser.createdAt,
-      updatedAt: fullUser.updatedAt,
+      id: user.id,
+      email: user.email,
+      isActive: user.isActive,
+      preferences: user.preferences,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
     };
   }
 
-  @Patch('me/preferences')
+  @Delete(':id')
   @UseGuards(JwtAuthGuard)
-  @ApiOperation({ summary: 'Update user preferences' })
-  @ApiResponse({ status: 200 })
-  async updatePreferences(
-    @GetUser() user: User,
-    @Body() dto: UpdatePreferencesDto,
-  ): Promise<UserPreferences> {
-    return this.usersService.updatePreferences(user.id, dto);
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Delete user' })
+  @ApiResponse({ status: 200, description: 'User deleted successfully' })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  async delete(@Param('id') id: string): Promise<{ message: string }> {
+    await this.usersService.delete(id);
+    return { message: 'User deleted successfully' };
   }
 }
