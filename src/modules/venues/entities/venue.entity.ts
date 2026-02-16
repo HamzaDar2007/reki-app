@@ -20,6 +20,7 @@ export enum VenueCategory {
   BAR = 'BAR',
   CLUB = 'CLUB',
   RESTAURANT = 'RESTAURANT',
+  CASINO = 'CASINO',
 }
 
 @Entity('venues')
