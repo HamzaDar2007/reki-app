@@ -49,27 +49,13 @@ Write-Host ""
 Run-Test "Setup Discovery Test" ".\E2E\setup-discovery-test-fixed.ps1"
 
 # 2. Venue Management Tests  
-Run-Test "Venue Management Tests" ".\E2E\test-venues-final.ps1"
+Run-Test "Venue Management Tests" ".\E2E\test-venues-working.ps1"
 
 # 3. User Journey Demo
 Run-Test "User Journey Demo" ".\E2E\demo-user-journey-fixed.ps1"
 
 # 4. Image System Tests
-Write-Host "🧪 Running: Image System Tests" -ForegroundColor Yellow
-try {
-    # First fix image paths
-    Write-Host "   Fixing image paths in database..." -ForegroundColor Gray
-    & npx ts-node fix-image-paths-final.ts
-    
-    # Then test images
-    & .\E2E\test-all-20-images.ps1
-    $testResults += @{ Name = "Image System Tests"; Status = "PASSED"; Error = $null }
-    Write-Host "✅ Image System Tests - PASSED" -ForegroundColor Green
-} catch {
-    Write-Host "❌ Image System Tests - FAILED: $($_.Exception.Message)" -ForegroundColor Red
-    $testResults += @{ Name = "Image System Tests"; Status = "FAILED"; Error = $_.Exception.Message }
-}
-Write-Host ""
+Run-Test "Image System Tests" ".\E2E\test-all-20-images.ps1"
 
 # 5. Additional Core Tests
 $additionalTests = @(

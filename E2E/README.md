@@ -29,22 +29,19 @@ npm run test:e2e
 ### 4. Venue Discovery Tests
 ```bash
 # Setup test data first
-.\E2E\setup-discovery-test.ps1
+.\E2E\setup-discovery-test-fixed.ps1
 
 # Run venue discovery tests
 .\E2E\test-discovery.ps1
 
 # Test venue management
-.\E2E\test-venues.ps1
+.\E2E\test-venues-working.ps1
 ```
 
 ### 5. Image Integration Tests
 ```bash
-# Test venue images (20 venues)
+# Test all 20 venue images
 .\E2E\test-all-20-images.ps1
-
-# Test venue image functionality
-.\E2E\test-venue-images.ps1
 ```
 
 ### 6. Notification Tests
@@ -76,7 +73,7 @@ npm run test:e2e
 ### User Demo
 ```bash
 # Complete user journey demo
-.\E2E\demo-user-journey.ps1
+.\E2E\demo-user-journey-fixed.ps1
 ```
 
 ### Investor Demo
@@ -91,16 +88,10 @@ npm run test:e2e
 .\E2E\demo-automation.ps1
 ```
 
-### Venue Setup Demos
+### Venue Demo
 ```bash
-# Setup 20 venues with images
+# Show all 20 venues with images
 .\E2E\demo-20-venues.ps1
-
-# Simple image integration demo
-.\E2E\demo-images-simple.ps1
-
-# Advanced image integration demo
-.\E2E\demo-image-integration.ps1
 ```
 
 ### Key Metrics Demo
@@ -109,45 +100,46 @@ npm run test:e2e
 .\E2E\demo-key-metrics.ps1
 ```
 
-## Running All Tests (Step by Step)
+## Running All Tests
 
-### Step 1: Environment Setup
+### Quick Run (All Tests)
+```bash
+# Run all tests at once
+.\E2E\run-all-tests-fixed.ps1
+```
+
+### Manual Run (Step by Step)
+
+#### Step 1: Environment Setup
 ```bash
 # Start database
 # Start API server
 npm run start:dev
 ```
 
-### Step 2: Core Tests
-```bash
-npm run test:e2e
-```
-
-### Step 3: API Tests (in order)
+#### Step 2: Core Module Tests
 ```bash
 .\E2E\test-users.ps1
-.\E2E\test-password-reset.ps1
-.\E2E\setup-discovery-test.ps1
+.\E2E\test-venues-working.ps1
 .\E2E\test-discovery.ps1
-.\E2E\test-venues.ps1
 ```
 
-### Step 4: Feature Tests
+#### Step 3: Feature Tests
 ```bash
 .\E2E\test-notifications.ps1
 .\E2E\test-analytics.ps1
 .\E2E\test-automation.ps1
+.\E2E\test-password-reset.ps1
 ```
 
-### Step 5: Image Tests
+#### Step 4: Image Tests
 ```bash
-.\E2E\test-venue-images.ps1
 .\E2E\test-all-20-images.ps1
 ```
 
-### Step 6: Demo Validation
+#### Step 5: Demo Validation
 ```bash
-.\E2E\demo-user-journey.ps1
+.\E2E\demo-user-journey-fixed.ps1
 .\E2E\demo-business-journey.ps1
 .\E2E\demo-investor-complete.ps1
 ```
