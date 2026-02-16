@@ -135,6 +135,39 @@ export class NotificationsService {
     }
   }
 
+  async sendPasswordResetEmail(email: string, resetToken: string): Promise<void> {
+    try {
+      if (!this.transporter) {
+        this.logger.warn('Email transporter not configured');
+        return;
+      }
+
+      await this.transporter.sendMail({
+        from: this.configService.get('EMAIL_USER'),
+        to: email,
+        subject: 'Password Reset - REKI',
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #333;">Password Reset Request</h2>
+            <p style="color: #777; line-height: 1.6;">You requested to reset your password. Use the token below:</p>
+            <div style="background: #f5f5f5; padding: 15px; margin: 20px 0; border-radius: 5px;">
+              <code style="font-size: 16px; color: #333;">${resetToken}</code>
+            </div>
+            <p style="color: #777; line-height: 1.6;">This token will expire in 1 hour.</p>
+            <p style="color: #999; font-size: 12px; margin-top: 30px;">
+              If you didn't request this, please ignore this email.
+            </p>
+          </div>
+        `,
+      });
+
+      this.logger.log(`Password reset email sent to ${email}`);
+    } catch (error) {
+      this.logger.error(`Failed to send password reset email to ${email}: ${error.message}`);
+      throw error;
+    }
+  }
+
   private async sendOfferEmail(
     email: string,
     venueName: string,

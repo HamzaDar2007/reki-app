@@ -65,7 +65,8 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'Logged out successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async logout(@Request() req) {
-    return this.authService.logout(req.user.id);
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    return this.authService.logout(req.user.id, token);
   }
 
   @Post('change-password')

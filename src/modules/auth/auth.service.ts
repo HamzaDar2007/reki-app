@@ -5,6 +5,8 @@ import { Repository } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 import { User } from '../users/entities/user.entity';
 import { UserPreferences } from '../users/entities/user-preferences.entity';
+import { TokenBlacklist } from './entities/token-blacklist.entity';
+import { NotificationsService } from '../notifications/notifications.service';
 import { RegisterDto } from './dto/register.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { randomBytes } from 'crypto';
@@ -17,6 +19,9 @@ export class AuthService {
     private readonly userRepo: Repository<User>,
     @InjectRepository(UserPreferences)
     private readonly prefsRepo: Repository<UserPreferences>,
+    @InjectRepository(TokenBlacklist)
+    private readonly blacklistRepo: Repository<TokenBlacklist>,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async register(
@@ -74,9 +79,12 @@ export class AuthService {
         throw new UnauthorizedException('Invalid refresh token');
       }
 
-      const tokens = await this.generateTokens(user);
+      await this.blacklistRepo.save({
+        token: refreshToken,
+        expiresAt: new Date(payload.exp * 1000),
+      });
 
-      // Update refresh token
+      const tokens = await this.generateTokens(user);
       user.refreshToken = await bcrypt.hash(tokens.refresh_token, 10);
       await this.userRepo.save(user);
 
@@ -86,8 +94,14 @@ export class AuthService {
     }
   }
 
-  async logout(userId: string): Promise<{ message: string }> {
-    // Explicitly set refreshToken to null to invalidate all sessions
+  async logout(userId: string, accessToken: string): Promise<{ message: string }> {
+    const payload = this.jwtService.decode(accessToken) as any;
+    
+    await this.blacklistRepo.save({
+      token: accessToken,
+      expiresAt: new Date(payload.exp * 1000),
+    });
+
     await this.userRepo
       .createQueryBuilder()
       .update(User)
@@ -100,21 +114,19 @@ export class AuthService {
   async forgotPassword(email: string): Promise<{ message: string }> {
     const user = await this.userRepo.findOne({ where: { email } });
     if (!user) {
-      // Don't reveal if user exists
       return { message: 'If the email exists, a reset link has been sent' };
     }
 
-    // Generate reset token
     const resetToken = randomBytes(32).toString('hex');
     const hashedToken = await bcrypt.hash(resetToken, 10);
 
     user.passwordResetToken = hashedToken;
-    user.passwordResetExpires = new Date(Date.now() + 3600000); // 1 hour
+    user.passwordResetExpires = new Date(Date.now() + 3600000);
     await this.userRepo.save(user);
 
-    // In a real app, send email with resetToken
-    // For now, we'll log it (in production, never log this!)
-    console.log(`Password reset token for ${email}: ${resetToken}`);
+    this.notificationsService.sendPasswordResetEmail(email, resetToken).catch(err => 
+      console.error('Failed to send reset email:', err.message)
+    );
 
     return { message: 'If the email exists, a reset link has been sent' };
   }
