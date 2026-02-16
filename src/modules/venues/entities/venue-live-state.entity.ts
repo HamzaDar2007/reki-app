@@ -37,10 +37,18 @@ export class VenueLiveState {
   @Column({ type: 'enum', enum: VibeType, default: VibeType.CHILL })
   vibe: VibeType;
 
-  @Column({ name: 'busyness_updated_at', type: 'timestamptz', default: () => 'now()' })
+  @Column({
+    name: 'busyness_updated_at',
+    type: 'timestamptz',
+    default: () => 'now()',
+  })
   busynessUpdatedAt: Date;
 
-  @Column({ name: 'vibe_updated_at', type: 'timestamptz', default: () => 'now()' })
+  @Column({
+    name: 'vibe_updated_at',
+    type: 'timestamptz',
+    default: () => 'now()',
+  })
   vibeUpdatedAt: Date;
 
   @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })

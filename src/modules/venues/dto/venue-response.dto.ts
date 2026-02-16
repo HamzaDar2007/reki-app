@@ -10,6 +10,8 @@ export class VenueResponseDto {
   lat?: number;
   lng?: number;
   coverImageUrl?: string;
+  galleryImages?: string[];
+  logoUrl?: string;
   description?: string;
   isActive: boolean;
 

@@ -86,7 +86,10 @@ export class NotificationsService {
   }
 
   async markAllAsRead(userId: string): Promise<void> {
-    await this.notificationRepo.update({ userId, isRead: false }, { isRead: true });
+    await this.notificationRepo.update(
+      { userId, isRead: false },
+      { isRead: true },
+    );
   }
 
   async deleteNotification(id: string): Promise<void> {
@@ -116,7 +119,7 @@ export class NotificationsService {
       // For now, notify ALL active users (simplified for debugging)
       for (const user of users) {
         this.logger.log(`Creating notification for user: ${user.id}`);
-        
+
         await this.create(
           user.id,
           `New Offer at ${venueName}`,
@@ -130,12 +133,17 @@ export class NotificationsService {
 
       this.logger.log(`Completed notifying ${users.length} users`);
     } catch (error) {
-      this.logger.error(`Failed to notify users about offer ${offerId}: ${error.message}`);
+      this.logger.error(
+        `Failed to notify users about offer ${offerId}: ${error.message}`,
+      );
       this.logger.error(error.stack);
     }
   }
 
-  async sendPasswordResetEmail(email: string, resetToken: string): Promise<void> {
+  async sendPasswordResetEmail(
+    email: string,
+    resetToken: string,
+  ): Promise<void> {
     try {
       if (!this.transporter) {
         this.logger.warn('Email transporter not configured');
@@ -163,7 +171,9 @@ export class NotificationsService {
 
       this.logger.log(`Password reset email sent to ${email}`);
     } catch (error) {
-      this.logger.error(`Failed to send password reset email to ${email}: ${error.message}`);
+      this.logger.error(
+        `Failed to send password reset email to ${email}: ${error.message}`,
+      );
       throw error;
     }
   }
@@ -214,8 +224,12 @@ export class NotificationsService {
         .createQueryBuilder(User, 'user')
         .leftJoinAndSelect('user.preferences', 'preferences')
         .where('user.isActive = :isActive', { isActive: true })
-        .andWhere('preferences.notificationsEnabled = :enabled', { enabled: true })
-        .andWhere('preferences.busynessNotifications = :busynessEnabled', { busynessEnabled: true })
+        .andWhere('preferences.notificationsEnabled = :enabled', {
+          enabled: true,
+        })
+        .andWhere('preferences.busynessNotifications = :busynessEnabled', {
+          busynessEnabled: true,
+        })
         .getMany();
 
       for (const user of users) {
@@ -228,10 +242,11 @@ export class NotificationsService {
         );
       }
 
-      this.logger.log(`Notified ${users.length} users about busyness change at ${venueName}`);
+      this.logger.log(
+        `Notified ${users.length} users about busyness change at ${venueName}`,
+      );
     } catch (error) {
       this.logger.error(`Failed to notify busyness change: ${error.message}`);
     }
   }
 }
-

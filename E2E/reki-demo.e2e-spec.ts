@@ -36,13 +36,13 @@ describe('Investor Demo (e2e)', () => {
 
     // Register
     await request(app.getHttpServer())
-      .post('/users/register')
+      .post('/auth/register')
       .send({ email, password })
       .expect(201);
 
     // Login
     const loginRes = await request(app.getHttpServer())
-      .post('/users/login')
+      .post('/auth/login')
       .send({ email, password })
       .expect(201);
 

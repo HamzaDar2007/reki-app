@@ -125,8 +125,6 @@ export class VenuesService {
       queryBuilder.andWhere('venue.city_id = :cityId', { cityId });
     }
 
-    return queryBuilder
-      .orderBy('venue.name', 'ASC')
-      .getMany();
+    return queryBuilder.orderBy('venue.name', 'ASC').getMany();
   }
 }

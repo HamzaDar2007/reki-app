@@ -11,7 +11,7 @@ import { ApiProperty } from '@nestjs/swagger';
 export class CreateCityDto {
   @ApiProperty({
     example: 'Manchester',
-    description: 'City name'
+    description: 'City name',
   })
   @IsString()
   @Length(2, 120)
@@ -19,7 +19,7 @@ export class CreateCityDto {
 
   @ApiProperty({
     example: 'GB',
-    description: 'Two-letter country code (ISO 3166-1 alpha-2)'
+    description: 'Two-letter country code (ISO 3166-1 alpha-2)',
   })
   @IsString()
   @Length(2, 2)
@@ -28,7 +28,7 @@ export class CreateCityDto {
   @ApiProperty({
     example: 'Europe/London',
     description: 'Timezone identifier',
-    required: false
+    required: false,
   })
   @IsOptional()
   @IsString()
@@ -37,7 +37,7 @@ export class CreateCityDto {
   @ApiProperty({
     example: true,
     description: 'Whether the city is active',
-    required: false
+    required: false,
   })
   @IsOptional()
   @IsBoolean()
@@ -46,7 +46,7 @@ export class CreateCityDto {
   @ApiProperty({
     example: 53.480759,
     description: 'City center latitude',
-    required: false
+    required: false,
   })
   @IsOptional()
   @IsLatitude()
@@ -55,7 +55,7 @@ export class CreateCityDto {
   @ApiProperty({
     example: -2.242631,
     description: 'City center longitude',
-    required: false
+    required: false,
   })
   @IsOptional()
   @IsLongitude()

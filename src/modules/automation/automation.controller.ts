@@ -1,5 +1,10 @@
 import { Controller, Post, Get, Body, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { AutomationService } from './automation.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
@@ -21,7 +26,10 @@ export class AutomationController {
   @ApiOperation({ summary: 'Trigger demo scenario (for testing)' })
   @ApiResponse({ status: 200, description: 'Demo scenario triggered' })
   async triggerDemo(
-    @Body() body: { scenario: 'quiet_to_busy' | 'busy_to_quiet' | 'vibe_shift' },
+    @Body()
+    body: {
+      scenario: 'quiet_to_busy' | 'busy_to_quiet' | 'vibe_shift';
+    },
   ) {
     return this.automationService.triggerDemoScenario(body.scenario);
   }

@@ -14,14 +14,14 @@ import { VenueCategory } from '../entities/venue.entity';
 export class CreateVenueDto {
   @ApiProperty({
     example: '3ff5e526-7819-45d5-9995-bd6db919c9b2',
-    description: 'City ID where the venue is located'
+    description: 'City ID where the venue is located',
   })
   @IsUUID()
   cityId: string;
 
   @ApiProperty({
     example: 'The Rooftop Bar',
-    description: 'Venue name'
+    description: 'Venue name',
   })
   @IsString()
   @Length(2, 160)
@@ -30,7 +30,7 @@ export class CreateVenueDto {
   @ApiProperty({
     example: 'BAR',
     description: 'Venue category',
-    enum: VenueCategory
+    enum: VenueCategory,
   })
   @IsEnum(VenueCategory)
   category: VenueCategory;
@@ -38,7 +38,7 @@ export class CreateVenueDto {
   @ApiProperty({
     example: '123 High Street, Manchester',
     description: 'Venue address',
-    required: false
+    required: false,
   })
   @IsOptional()
   @IsString()
@@ -48,7 +48,7 @@ export class CreateVenueDto {
   @ApiProperty({
     example: 'M1 1AA',
     description: 'Venue postcode',
-    required: false
+    required: false,
   })
   @IsOptional()
   @IsString()
@@ -58,7 +58,7 @@ export class CreateVenueDto {
   @ApiProperty({
     example: 53.4808,
     description: 'Venue latitude',
-    required: false
+    required: false,
   })
   @IsOptional()
   @IsLatitude()
@@ -67,7 +67,7 @@ export class CreateVenueDto {
   @ApiProperty({
     example: -2.2426,
     description: 'Venue longitude',
-    required: false
+    required: false,
   })
   @IsOptional()
   @IsLongitude()
@@ -76,7 +76,7 @@ export class CreateVenueDto {
   @ApiProperty({
     example: 'https://example.com/image.jpg',
     description: 'Venue cover image URL',
-    required: false
+    required: false,
   })
   @IsOptional()
   @IsString()
@@ -85,7 +85,7 @@ export class CreateVenueDto {
   @ApiProperty({
     example: 'A trendy rooftop bar with amazing city views',
     description: 'Venue description',
-    required: false
+    required: false,
   })
   @IsOptional()
   @IsString()
@@ -94,7 +94,7 @@ export class CreateVenueDto {
   @ApiProperty({
     example: true,
     description: 'Whether the venue is active',
-    required: false
+    required: false,
   })
   @IsOptional()
   @IsBoolean()

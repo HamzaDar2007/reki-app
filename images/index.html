@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>REKI - 20 Venue Images</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .subtitle {
+            color: rgba(255,255,255,0.9);
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 1.2em;
+        }
+        .stats {
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-around;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .stat {
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+        .stat-label {
+            color: #666;
+            margin-top: 5px;
+        }
+        .category {
+            margin-bottom: 40px;
+        }
+        .category-title {
+            color: white;
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+        }
+        .card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        }
+        .card-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            background: #f0f0f0;
+        }
+        .card-content {
+            padding: 20px;
+        }
+        .card-title {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .card-url {
+            font-size: 0.85em;
+            color: #666;
+            word-break: break-all;
+            background: #f8f8f8;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+        }
+        .badge {
+            display: inline-block;
+            padding: 5px 12px;
+            background: #667eea;
+            color: white;
+            border-radius: 20px;
+            font-size: 0.8em;
+            margin-bottom: 10px;
+        }
+        .error {
+            color: red;
+            padding: 10px;
+            background: #ffe0e0;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        .loading {
+            text-align: center;
+            color: white;
+            font-size: 1.5em;
+            padding: 50px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎉 REKI MVP - Venue Images</h1>
+        <p class="subtitle">All 20 Manchester venues with images</p>
+        
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-number" id="totalVenues">20</div>
+                <div class="stat-label">Total Venues</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number" id="barsCount">5</div>
+                <div class="stat-label">Bars</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number" id="casinosCount">5</div>
+                <div class="stat-label">Casinos</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number" id="restaurantsCount">10</div>
+                <div class="stat-label">Restaurants</div>
+            </div>
+        </div>
+
+        <div id="content" class="loading">Loading venues...</div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3000';
+        const CITY_ID = '3ff5e526-7819-45d5-9995-bd6db919c9b2';
+
+        async function loadVenues() {
+            try {
+                const response = await fetch(`${API_BASE}/venues?cityId=${CITY_ID}`);
+                const venues = await response.json();
+
+                // Group by category
+                const bars = venues.filter(v => v.category === 'BAR');
+                const casinos = venues.filter(v => v.category === 'CASINO');
+                const restaurants = venues.filter(v => v.category === 'RESTAURANT');
+
+                // Update stats
+                document.getElementById('totalVenues').textContent = venues.length;
+                document.getElementById('barsCount').textContent = bars.length;
+                document.getElementById('casinosCount').textContent = casinos.length;
+                document.getElementById('restaurantsCount').textContent = restaurants.length;
+
+                // Render categories
+                const content = document.getElementById('content');
+                content.className = '';
+                content.innerHTML = '';
+
+                renderCategory('🍺 Bars', bars, content);
+                renderCategory('🎰 Casinos', casinos, content);
+                renderCategory('🍽️ Restaurants', restaurants, content);
+
+            } catch (error) {
+                document.getElementById('content').innerHTML = `
+                    <div class="error">
+                        <strong>Error loading venues:</strong> ${error.message}<br>
+                        Make sure the server is running at ${API_BASE}
+                    </div>
+                `;
+            }
+        }
+
+        function renderCategory(title, venues, container) {
+            if (venues.length === 0) return;
+
+            const categoryDiv = document.createElement('div');
+            categoryDiv.className = 'category';
+            
+            const titleDiv = document.createElement('div');
+            titleDiv.className = 'category-title';
+            titleDiv.textContent = `${title} (${venues.length})`;
+            categoryDiv.appendChild(titleDiv);
+
+            const grid = document.createElement('div');
+            grid.className = 'grid';
+
+            venues.forEach(venue => {
+                const card = createVenueCard(venue);
+                grid.appendChild(card);
+            });
+
+            categoryDiv.appendChild(grid);
+            container.appendChild(categoryDiv);
+        }
+
+        function createVenueCard(venue) {
+            const card = document.createElement('div');
+            card.className = 'card';
+
+            const imageUrl = `${API_BASE}${venue.coverImageUrl}`;
+            
+            card.innerHTML = `
+                <img 
+                    src="${imageUrl}" 
+                    alt="${venue.name}"
+                    class="card-image"
+                    onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22200%22><rect fill=%22%23f0f0f0%22 width=%22300%22 height=%22200%22/><text x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%23999%22>Image not found</text></svg>'"
+                >
+                <div class="card-content">
+                    <span class="badge">${venue.category}</span>
+                    <div class="card-title">${venue.name}</div>
+                    <div class="card-url">${venue.coverImageUrl}</div>
+                </div>
+            `;
+
+            return card;
+        }
+
+        // Load venues on page load
+        loadVenues();
+    </script>
+</body>
+</html>

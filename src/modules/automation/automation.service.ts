@@ -31,7 +31,9 @@ export class AutomationService {
       const dayOfWeek = now.getDay(); // 0 = Sunday, 6 = Saturday
       const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
-      this.logger.log(`Running vibe schedule update - Day: ${dayOfWeek}, Time: ${currentTime}`);
+      this.logger.log(
+        `Running vibe schedule update - Day: ${dayOfWeek}, Time: ${currentTime}`,
+      );
 
       // Get all active schedules for current day
       const schedules = await this.vibeScheduleRepo.find({
@@ -44,7 +46,9 @@ export class AutomationService {
 
       for (const schedule of schedules) {
         // Check if current time falls within schedule
-        if (this.isTimeInRange(currentTime, schedule.startTime, schedule.endTime)) {
+        if (
+          this.isTimeInRange(currentTime, schedule.startTime, schedule.endTime)
+        ) {
           // Update venue live state with scheduled vibe
           const liveState = await this.liveStateRepo.findOne({
             where: { venue: { id: schedule.venue.id } },
@@ -67,9 +71,7 @@ export class AutomationService {
       }
     } catch (error) {
       const err = error as Error;
-      this.logger.error(
-        `Error updating vibes from schedules: ${err.message}`,
-      );
+      this.logger.error(`Error updating vibes from schedules: ${err.message}`);
     }
   }
 
@@ -112,14 +114,16 @@ export class AutomationService {
       }
     } catch (error) {
       const err = error as Error;
-      this.logger.error(
-        `Error simulating busyness changes: ${err.message}`,
-      );
+      this.logger.error(`Error simulating busyness changes: ${err.message}`);
     }
   }
 
   // Helper: Check if current time is within schedule range
-  private isTimeInRange(currentTime: string, startTime: string, endTime: string): boolean {
+  private isTimeInRange(
+    currentTime: string,
+    startTime: string,
+    endTime: string,
+  ): boolean {
     const [currentH, currentM] = currentTime.split(':').map(Number);
     const [startH, startM] = startTime.split(':').map(Number);
     const [endH, endM] = endTime.split(':').map(Number);
@@ -137,7 +141,10 @@ export class AutomationService {
   }
 
   // Helper: Calculate realistic busyness based on time of day and venue type
-  private calculateBusynessForHour(hour: number, category: string): BusynessLevel {
+  private calculateBusynessForHour(
+    hour: number,
+    category: string,
+  ): BusynessLevel {
     // Different patterns for different venue types
     if (category === 'CLUB') {
       if (hour >= 0 && hour < 6) return BusynessLevel.BUSY; // Late night
@@ -166,7 +173,9 @@ export class AutomationService {
   }
 
   // Manual trigger for demo purposes
-  async triggerDemoScenario(scenario: 'quiet_to_busy' | 'busy_to_quiet' | 'vibe_shift'): Promise<{ message: string; affected: number }> {
+  async triggerDemoScenario(
+    scenario: 'quiet_to_busy' | 'busy_to_quiet' | 'vibe_shift',
+  ): Promise<{ message: string; affected: number }> {
     this.logger.log(`Triggering demo scenario: ${scenario}`);
 
     const venues = await this.venueRepo.find({ take: 5 }); // Affect first 5 venues

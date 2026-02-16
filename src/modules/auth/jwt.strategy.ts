@@ -27,7 +27,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   async validate(req: any, payload: { sub: string; email: string }) {
     const token = req.headers.authorization?.replace('Bearer ', '');
     const blacklisted = await this.blacklistRepo.findOne({ where: { token } });
-    
+
     if (blacklisted) {
       throw new UnauthorizedException('Token has been revoked');
     }

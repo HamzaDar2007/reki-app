@@ -19,7 +19,7 @@ import { NotificationsService } from '../notifications/notifications.service';
 @Injectable()
 export class OffersService {
   private readonly logger = new Logger(OffersService.name);
-  
+
   // Busyness level ranking for correct comparison
   private readonly busynessRanking = {
     [BusynessLevel.QUIET]: 1,
@@ -66,7 +66,9 @@ export class OffersService {
 
     this.logger.log(`Full offer loaded: ${fullOffer ? 'YES' : 'NO'}`);
     if (fullOffer) {
-      this.logger.log(`Offer details: isActive=${fullOffer.isActive}, startsAt=${fullOffer.startsAt}, now=${new Date()}`);
+      this.logger.log(
+        `Offer details: isActive=${fullOffer.isActive}, startsAt=${fullOffer.startsAt}, now=${new Date()}`,
+      );
     }
 
     // Trigger notification if offer is active and starts now or in the future

@@ -1,5 +1,17 @@
-import { Controller, Post, Body, Get, UseGuards, Request } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
 import { LoginDto } from '../users/dto/login.dto';
@@ -28,7 +40,10 @@ export class AuthController {
 
   @Post('login')
   @ApiOperation({ summary: '[Public] User login' })
-  @ApiResponse({ status: 200, description: 'Login successful, returns JWT tokens' })
+  @ApiResponse({
+    status: 200,
+    description: 'Login successful, returns JWT tokens',
+  })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
   async login(@Body() dto: LoginDto) {
     const user = await this.usersService.login(dto);
@@ -45,7 +60,10 @@ export class AuthController {
 
   @Post('forgot-password')
   @ApiOperation({ summary: '[Public] Request password reset' })
-  @ApiResponse({ status: 200, description: 'Password reset email sent if user exists' })
+  @ApiResponse({
+    status: 200,
+    description: 'Password reset email sent if user exists',
+  })
   async forgotPassword(@Body() dto: ForgotPasswordDto) {
     return this.authService.forgotPassword(dto.email);
   }
@@ -74,7 +92,10 @@ export class AuthController {
   @ApiBearerAuth()
   @ApiOperation({ summary: '[Customer] Change password' })
   @ApiResponse({ status: 200, description: 'Password changed successfully' })
-  @ApiResponse({ status: 401, description: 'Unauthorized or invalid old password' })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized or invalid old password',
+  })
   async changePassword(@Request() req, @Body() dto: ChangePasswordDto) {
     return this.authService.changePassword(req.user.id, dto);
   }
@@ -87,7 +108,13 @@ export class AuthController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getMe(@Request() req) {
     const user = await this.usersService.findById(req.user.id);
-    const { passwordHash, refreshToken, passwordResetToken, passwordResetExpires, ...result } = user;
+    const {
+      passwordHash,
+      refreshToken,
+      passwordResetToken,
+      passwordResetExpires,
+      ...result
+    } = user;
     return result;
   }
 }

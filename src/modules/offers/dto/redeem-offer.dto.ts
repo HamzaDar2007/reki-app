@@ -4,7 +4,7 @@ import { ApiProperty } from '@nestjs/swagger';
 export class RedeemOfferDto {
   @ApiProperty({
     example: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
-    description: 'ID of the offer to redeem'
+    description: 'ID of the offer to redeem',
   })
   @IsUUID()
   offerId: string;
@@ -12,7 +12,7 @@ export class RedeemOfferDto {
   @ApiProperty({
     example: 'DEMO',
     description: 'Source of the redemption (DEMO, INVESTOR, INTERNAL, etc.)',
-    required: false
+    required: false,
   })
   @IsOptional()
   @IsString()

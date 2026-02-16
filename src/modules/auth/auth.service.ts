@@ -94,9 +94,12 @@ export class AuthService {
     }
   }
 
-  async logout(userId: string, accessToken: string): Promise<{ message: string }> {
-    const payload = this.jwtService.decode(accessToken) as any;
-    
+  async logout(
+    userId: string,
+    accessToken: string,
+  ): Promise<{ message: string }> {
+    const payload = this.jwtService.decode(accessToken);
+
     await this.blacklistRepo.save({
       token: accessToken,
       expiresAt: new Date(payload.exp * 1000),
@@ -124,9 +127,11 @@ export class AuthService {
     user.passwordResetExpires = new Date(Date.now() + 3600000);
     await this.userRepo.save(user);
 
-    this.notificationsService.sendPasswordResetEmail(email, resetToken).catch(err => 
-      console.error('Failed to send reset email:', err.message)
-    );
+    this.notificationsService
+      .sendPasswordResetEmail(email, resetToken)
+      .catch((err) =>
+        console.error('Failed to send reset email:', err.message),
+      );
 
     return { message: 'If the email exists, a reset link has been sent' };
   }

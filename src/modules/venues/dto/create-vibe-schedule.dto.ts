@@ -14,7 +14,7 @@ import { VibeType } from '../entities/venue-live-state.entity';
 export class CreateVibeScheduleDto {
   @ApiProperty({
     example: 5,
-    description: 'Day of the week (0 = Sunday, 1 = Monday, ..., 6 = Saturday)'
+    description: 'Day of the week (0 = Sunday, 1 = Monday, ..., 6 = Saturday)',
   })
   @IsInt()
   @Min(0)
@@ -23,7 +23,7 @@ export class CreateVibeScheduleDto {
 
   @ApiProperty({
     example: '19:00',
-    description: 'Start time in HH:mm format'
+    description: 'Start time in HH:mm format',
   })
   @IsString()
   @Matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, {
@@ -33,7 +33,7 @@ export class CreateVibeScheduleDto {
 
   @ApiProperty({
     example: '22:00',
-    description: 'End time in HH:mm format'
+    description: 'End time in HH:mm format',
   })
   @IsString()
   @Matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, {
@@ -44,7 +44,7 @@ export class CreateVibeScheduleDto {
   @ApiProperty({
     example: 'PARTY',
     description: 'Vibe type for this time slot',
-    enum: VibeType
+    enum: VibeType,
   })
   @IsEnum(VibeType)
   vibe: VibeType;
@@ -52,7 +52,7 @@ export class CreateVibeScheduleDto {
   @ApiProperty({
     example: 1,
     description: 'Priority level (higher number = higher priority)',
-    required: false
+    required: false,
   })
   @IsOptional()
   @IsInt()
@@ -62,7 +62,7 @@ export class CreateVibeScheduleDto {
   @ApiProperty({
     example: true,
     description: 'Whether this schedule is active',
-    required: false
+    required: false,
   })
   @IsOptional()
   @IsBoolean()

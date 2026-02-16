@@ -1,7 +1,10 @@
 import { Entity, PrimaryColumn, Column, OneToOne, JoinColumn } from 'typeorm';
 import { User } from './user.entity';
 import { VenueCategory } from '../../venues/entities/venue.entity';
-import { BusynessLevel, VibeType } from '../../venues/entities/venue-live-state.entity';
+import {
+  BusynessLevel,
+  VibeType,
+} from '../../venues/entities/venue-live-state.entity';
 
 @Entity('user_preferences')
 export class UserPreferences {

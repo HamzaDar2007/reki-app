@@ -49,13 +49,27 @@ export class VenuesController {
   @ApiQuery({ name: 'lat', required: false, type: Number })
   @ApiQuery({ name: 'lng', required: false, type: Number })
   @ApiQuery({ name: 'radius', required: false, type: Number })
-  @ApiQuery({ name: 'search', required: false, type: String, description: 'Search venues by name or description' })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    type: String,
+    description: 'Search venues by name or description',
+  })
   @ApiQuery({ name: 'categories', required: false, type: [String] })
   @ApiQuery({ name: 'minBusyness', required: false })
   @ApiQuery({ name: 'preferredVibes', required: false, type: [String] })
   @ApiQuery({ name: 'hasOffers', required: false, type: Boolean })
-  @ApiQuery({ name: 'sortBy', required: false, enum: ['distance', 'name', 'busyness', 'offers'] })
-  @ApiQuery({ name: 'usePreferences', required: false, type: Boolean, description: 'Use user preferences if authenticated' })
+  @ApiQuery({
+    name: 'sortBy',
+    required: false,
+    enum: ['distance', 'name', 'busyness', 'offers'],
+  })
+  @ApiQuery({
+    name: 'usePreferences',
+    required: false,
+    type: Boolean,
+    description: 'Use user preferences if authenticated',
+  })
   @ApiBearerAuth()
   @ApiOkResponse({ type: [VenueResponseDto] })
   async findVenues(
@@ -102,7 +116,9 @@ export class VenuesController {
     } else if (cityId) {
       venues = await this.venuesService.findByCity(cityId);
     } else {
-      throw new Error('Either cityId, search query, or lat/lng coordinates are required');
+      throw new Error(
+        'Either cityId, search query, or lat/lng coordinates are required',
+      );
     }
 
     // Apply preference-based filtering
@@ -112,14 +128,17 @@ export class VenuesController {
     if (minBusyness) {
       venues = venues.filter((v: Venue) => {
         const busynessLevels = ['QUIET', 'MODERATE', 'BUSY'];
-        const currentLevel = busynessLevels.indexOf(v.liveState?.busyness || 'QUIET');
+        const currentLevel = busynessLevels.indexOf(
+          v.liveState?.busyness || 'QUIET',
+        );
         const minLevel = busynessLevels.indexOf(minBusyness);
         return currentLevel >= minLevel;
       });
     }
     if (preferredVibes && preferredVibes.length > 0) {
-      venues = venues.filter((v: Venue) =>
-        v.liveState?.vibe && preferredVibes.includes(v.liveState.vibe),
+      venues = venues.filter(
+        (v: Venue) =>
+          v.liveState?.vibe && preferredVibes.includes(v.liveState.vibe),
       );
     }
     if (hasOffers !== undefined) {
@@ -144,6 +163,8 @@ export class VenuesController {
         lat: v.lat ? Number(v.lat) : undefined,
         lng: v.lng ? Number(v.lng) : undefined,
         coverImageUrl: v.coverImageUrl,
+        galleryImages: v.galleryImages,
+        logoUrl: v.logoUrl,
         description: v.description,
         isActive: v.isActive,
         busyness: v.liveState?.busyness,
@@ -175,7 +196,10 @@ export class VenuesController {
       venueResponses.sort((a, b) => a.name.localeCompare(b.name));
     } else if (sortBy === 'busyness') {
       const busynessOrder = { QUIET: 0, MODERATE: 1, BUSY: 2 };
-      venueResponses.sort((a, b) => (busynessOrder[b.busyness] || 0) - (busynessOrder[a.busyness] || 0));
+      venueResponses.sort(
+        (a, b) =>
+          (busynessOrder[b.busyness] || 0) - (busynessOrder[a.busyness] || 0),
+      );
     } else if (sortBy === 'offers') {
       venueResponses.sort((a, b) => b.activeOffersCount - a.activeOffersCount);
     }

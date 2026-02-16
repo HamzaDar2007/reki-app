@@ -55,6 +55,12 @@ export class Venue {
   @Column({ name: 'cover_image_url', type: 'text', nullable: true })
   coverImageUrl?: string;
 
+  @Column({ name: 'gallery_images', type: 'text', array: true, nullable: true })
+  galleryImages?: string[];
+
+  @Column({ name: 'logo_url', type: 'text', nullable: true })
+  logoUrl?: string;
+
   @Column({ type: 'text', nullable: true })
   description?: string;
 

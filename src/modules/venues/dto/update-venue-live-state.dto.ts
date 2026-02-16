@@ -7,7 +7,7 @@ export class UpdateVenueLiveStateDto {
     example: 'BUSY',
     description: 'Current busyness level of the venue',
     enum: BusynessLevel,
-    required: false
+    required: false,
   })
   @IsOptional()
   @IsEnum(BusynessLevel)
@@ -17,7 +17,7 @@ export class UpdateVenueLiveStateDto {
     example: 'PARTY',
     description: 'Current vibe of the venue',
     enum: VibeType,
-    required: false
+    required: false,
   })
   @IsOptional()
   @IsEnum(VibeType)

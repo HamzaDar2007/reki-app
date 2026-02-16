@@ -1,4 +1,13 @@
-import { Controller, Get, Patch, Delete, Param, UseGuards, Post, Body } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Patch,
+  Delete,
+  Param,
+  UseGuards,
+  Post,
+  Body,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -70,4 +79,3 @@ export class NotificationsController {
     return { success: true, message: 'Test notification created' };
   }
 }
-
