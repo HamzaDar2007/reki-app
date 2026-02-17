@@ -15,6 +15,8 @@ async function bootstrap() {
       'http://localhost:3000',
       'http://localhost:3001',
       'http://localhost:8100',
+      'http://18.171.182.71:3000',
+      'http://18.171.182.71',
     ],
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
     credentials: true,
@@ -63,6 +65,7 @@ async function bootstrap() {
     .addTag('analytics', 'Venue owner & platform analytics')
     .addTag('demo', 'Demo simulation scenarios')
     .addServer('http://localhost:3000', 'Development server')
+    .addServer('http://18.171.182.71:3000', 'Production Server')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
