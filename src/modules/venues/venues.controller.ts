@@ -32,6 +32,10 @@ import { User } from '../users/entities/user.entity';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserPreferences } from '../users/entities/user-preferences.entity';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { VenueOwnershipGuard } from '../../common/guards/venue-ownership.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { UserRole } from '../../common/enums/roles.enum';
 
 @ApiTags('Venues')
 @Controller('venues')
@@ -235,7 +239,8 @@ export class VenuesController {
   }
 
   @Post()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.BUSINESS, UserRole.ADMIN)
   @ApiBearerAuth()
   @ApiCreatedResponse({ type: VenueResponseDto })
   async create(
@@ -266,8 +271,10 @@ export class VenuesController {
     };
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard, VenueOwnershipGuard)
   @Patch(':id/live-state')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, VenueOwnershipGuard)
+  @Roles(UserRole.BUSINESS, UserRole.ADMIN)
   @ApiBearerAuth()
   @ApiOkResponse({ description: 'Live state updated' })
   async updateLiveState(
@@ -275,10 +282,7 @@ export class VenuesController {
     @Body() dto: UpdateVenueLiveStateDto,
     @GetUser() user: User,
   ) {
-    const venue = await this.venuesService.findById(venueId);
-    if (venue.ownerId !== user.id) {
-      throw new ForbiddenException('You do not own this venue');
-    }
+    // VenueOwnershipGuard already checked ownership, so we can proceed
     const updated = await this.liveStateService.update(venueId, dto);
     return {
       venueId,
@@ -291,7 +295,8 @@ export class VenuesController {
   }
 
   @Post(':id/vibe-schedules')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, VenueOwnershipGuard)
+  @Roles(UserRole.BUSINESS, UserRole.ADMIN)
   @ApiBearerAuth()
   @ApiCreatedResponse({ description: 'Vibe schedule created' })
   async createVibeSchedule(
@@ -299,10 +304,7 @@ export class VenuesController {
     @Body() dto: CreateVibeScheduleDto,
     @GetUser() user: User,
   ) {
-    const venue = await this.venuesService.findById(venueId);
-    if (venue.ownerId !== user.id) {
-      throw new ForbiddenException('You do not own this venue');
-    }
+    // VenueOwnershipGuard already checked ownership, so we can proceed
     const created = await this.vibeScheduleService.create(venueId, dto);
     return {
       id: created.id,

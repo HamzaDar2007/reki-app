@@ -10,6 +10,7 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { RegisterDto } from './dto/register.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { randomBytes } from 'crypto';
+import { UserRole } from '../../common/enums/roles.enum';
 
 @Injectable()
 export class AuthService {
@@ -31,6 +32,7 @@ export class AuthService {
     const user = this.userRepo.create({
       email: dto.email,
       passwordHash: hash,
+      role: dto.role || UserRole.USER, // Default to USER role
     });
 
     const savedUser = await this.userRepo.save(user);
@@ -196,7 +198,11 @@ export class AuthService {
   private async generateTokens(
     user: User,
   ): Promise<{ access_token: string; refresh_token: string }> {
-    const payload = { email: user.email, sub: user.id };
+    const payload = { 
+      email: user.email, 
+      sub: user.id,
+      role: user.role  // Include role in JWT payload
+    };
 
     return {
       access_token: this.jwtService.sign(payload, { expiresIn: '15m' }),

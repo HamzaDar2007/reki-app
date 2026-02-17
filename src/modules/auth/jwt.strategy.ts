@@ -24,7 +24,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(req: any, payload: { sub: string; email: string }) {
+  async validate(req: any, payload: { sub: string; email: string; role?: string }) {
     const token = req.headers.authorization?.replace('Bearer ', '');
     const blacklisted = await this.blacklistRepo.findOne({ where: { token } });
 
@@ -32,6 +32,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException('Token has been revoked');
     }
 
-    return this.usersService.findById(payload.sub);
+    const user = await this.usersService.findById(payload.sub);
+    
+    // Include role in request.user for guards
+    return {
+      ...user,
+      role: user.role || payload.role  // Use user.role from DB, fallback to token
+    };
   }
 }

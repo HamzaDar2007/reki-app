@@ -10,6 +10,7 @@ import {
 } from 'typeorm';
 import { UserPreferences } from './user-preferences.entity';
 import { Venue } from '../../venues/entities/venue.entity';
+import { UserRole } from '../../../common/enums/roles.enum';
 
 @Entity('users')
 export class User {
@@ -21,6 +22,13 @@ export class User {
 
   @Column()
   passwordHash: string;
+
+  @Column({
+    type: 'enum',
+    enum: UserRole,
+    default: UserRole.USER,
+  })
+  role: UserRole;
 
   @Column({ nullable: true })
   refreshToken?: string;

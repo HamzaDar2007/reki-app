@@ -17,24 +17,31 @@ import { GetUser } from '../auth/get-user.decorator';
 import { User } from '../users/entities/user.entity';
 import { AnalyticsService } from './analytics.service';
 import { VenuesService } from '../venues/venues.service';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { UserRole } from '../../common/enums/roles.enum';
+import { OffersService } from '../offers/offers.service';
 
 @ApiTags('Analytics')
 @Controller('analytics')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
 export class AnalyticsController {
   constructor(
     private readonly analyticsService: AnalyticsService,
     private readonly venuesService: VenuesService,
+    private readonly offersService: OffersService,
   ) {}
 
   @Get('owner/dashboard')
+  @Roles(UserRole.BUSINESS, UserRole.ADMIN)
   @ApiOkResponse({ description: 'Owner dashboard analytics' })
   async getOwnerDashboard(@GetUser() user: User) {
     return this.analyticsService.getOwnerDashboard(user.id);
   }
 
   @Get('venues/:venueId')
+  @Roles(UserRole.BUSINESS, UserRole.ADMIN)
   @ApiQuery({
     name: 'startDate',
     required: false,
@@ -54,9 +61,9 @@ export class AnalyticsController {
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
   ) {
-    // Verify ownership
+    // Verify ownership (admins can access any venue)
     const venue = await this.venuesService.findById(venueId);
-    if (venue.ownerId !== user.id) {
+    if (user.role !== UserRole.ADMIN && venue.ownerId !== user.id) {
       throw new ForbiddenException('You do not own this venue');
     }
 
@@ -67,16 +74,26 @@ export class AnalyticsController {
   }
 
   @Get('offers/:offerId')
+  @Roles(UserRole.BUSINESS, UserRole.ADMIN)
   @ApiOkResponse({ description: 'Offer analytics' })
-  async getOfferAnalytics(@Param('offerId') offerId: string) {
-    // Note: In production, should verify offer belongs to user's venue
+  async getOfferAnalytics(
+    @Param('offerId') offerId: string,
+    @GetUser() user: User,
+  ) {
+    // Verify offer belongs to user's venue
+    const offer = await this.offersService.findById(offerId);
+    const venue = await this.venuesService.findById(offer.venue.id);
+    if (user.role !== UserRole.ADMIN && venue.ownerId !== user.id) {
+      throw new ForbiddenException('You do not own this offer');
+    }
     return this.analyticsService.getOfferAnalytics(offerId);
   }
 
   @Get('platform/engagement')
+  @Roles(UserRole.ADMIN)
   @ApiOkResponse({ description: 'Platform-wide user engagement analytics' })
   async getPlatformEngagement() {
-    // Note: In production, this should be admin-only
+    // Admin-only endpoint
     return this.analyticsService.getUserEngagementAnalytics();
   }
 }

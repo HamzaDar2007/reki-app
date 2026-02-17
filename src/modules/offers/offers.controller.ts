@@ -25,6 +25,9 @@ import { UpdateOfferStatusDto } from './dto/update-offer-status.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { GetUser } from '../auth/get-user.decorator';
 import { User } from '../users/entities/user.entity';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { UserRole } from '../../common/enums/roles.enum';
 
 @ApiTags('Offers')
 @Controller('offers')
@@ -124,7 +127,8 @@ export class OffersController {
   }
 
   @Post()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.BUSINESS, UserRole.ADMIN)
   @ApiBearerAuth()
   @ApiCreatedResponse({ type: OfferResponseDto })
   async create(
@@ -132,7 +136,8 @@ export class OffersController {
     @GetUser() user: User,
   ): Promise<OfferResponseDto> {
     const venue = await this.venuesService.findById(dto.venueId);
-    if (venue.ownerId !== user.id) {
+    // Check ownership unless admin
+    if (user.role !== UserRole.ADMIN && venue.ownerId !== user.id) {
       throw new ForbiddenException('You do not own this venue');
     }
     const offer = await this.offersService.create(dto);
@@ -190,7 +195,8 @@ export class OffersController {
   }
 
   @Patch(':id/status')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.BUSINESS, UserRole.ADMIN)
   @ApiBearerAuth()
   @ApiOkResponse({ description: 'Offer status updated' })
   async updateStatus(
@@ -200,7 +206,8 @@ export class OffersController {
   ) {
     const offer = await this.offersService.findById(id);
     const venue = await this.venuesService.findById(offer.venue.id);
-    if (venue.ownerId !== user.id) {
+    // Check ownership unless admin
+    if (user.role !== UserRole.ADMIN && venue.ownerId !== user.id) {
       throw new ForbiddenException('You do not own this offer');
     }
     return this.offersService.updateStatus(id, dto.isActive);
