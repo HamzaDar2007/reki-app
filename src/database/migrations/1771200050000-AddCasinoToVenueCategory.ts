@@ -4,7 +4,13 @@ export class AddCasinoToVenueCategory1771200050000 implements MigrationInterface
   name = 'AddCasinoToVenueCategory1771200050000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
+    // Check if the transaction is active before committing
+    if (queryRunner.isTransactionActive) {
+      await queryRunner.commitTransaction();
+    }
+    
     // Add CASINO to the venue_category_enum if it doesn't exist
+    // This must be done outside of a transaction
     await queryRunner.query(`
       DO $$ 
       BEGIN
@@ -19,6 +25,9 @@ export class AddCasinoToVenueCategory1771200050000 implements MigrationInterface
         END IF;
       END $$;
     `);
+    
+    // Start new transaction for subsequent migrations
+    await queryRunner.startTransaction();
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
