@@ -1,35 +1,65 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  Logger,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Venue } from './entities/venue.entity';
 import { VenueLiveState } from './entities/venue-live-state.entity';
 import { CreateVenueDto } from './dto/create-venue.dto';
+import { City } from '../cities/entities/city.entity';
 
 @Injectable()
 export class VenuesService {
+  private readonly logger = new Logger(VenuesService.name);
+
   constructor(
     @InjectRepository(Venue)
     private readonly venueRepo: Repository<Venue>,
     @InjectRepository(VenueLiveState)
     private readonly liveStateRepo: Repository<VenueLiveState>,
+    @InjectRepository(City)
+    private readonly cityRepo: Repository<City>,
   ) {}
 
   async create(dto: CreateVenueDto, ownerId?: string): Promise<Venue> {
-    const venue = this.venueRepo.create({
-      ...dto,
-      city: { id: dto.cityId },
-      owner: ownerId ? { id: ownerId } : undefined,
-    });
+    try {
+      // Validate that the city exists
+      const city = await this.cityRepo.findOne({
+        where: { id: dto.cityId, isActive: true },
+      });
 
-    const savedVenue = await this.venueRepo.save(venue);
+      if (!city) {
+        throw new BadRequestException(
+          `City with ID "${dto.cityId}" does not exist or is inactive`,
+        );
+      }
 
-    // Create initial live state
-    const liveState = this.liveStateRepo.create({
-      venue: savedVenue,
-    });
-    await this.liveStateRepo.save(liveState);
+      const venue = this.venueRepo.create({
+        ...dto,
+        city: { id: dto.cityId },
+        owner: ownerId ? { id: ownerId } : undefined,
+      });
 
-    return savedVenue;
+      const savedVenue = await this.venueRepo.save(venue);
+
+      // Create initial live state
+      const liveState = this.liveStateRepo.create({
+        venue: savedVenue,
+      });
+      await this.liveStateRepo.save(liveState);
+
+      this.logger.log(`Venue created: ${savedVenue.name} in city ${city.name}`);
+      return savedVenue;
+    } catch (error) {
+      if ((error as any).status === 400) {
+        throw error;
+      }
+      this.logger.error(`Failed to create venue: ${error.message}`);
+      throw error;
+    }
   }
 
   async findByCity(cityId: string): Promise<Venue[]> {
@@ -38,7 +68,7 @@ export class VenuesService {
         city: { id: cityId },
         isActive: true,
       },
-      relations: ['liveState', 'city'],
+      relations: ['liveState', 'city', 'offers'],
       order: { name: 'ASC' },
     });
   }
@@ -62,6 +92,7 @@ export class VenuesService {
       .createQueryBuilder('venue')
       .leftJoinAndSelect('venue.liveState', 'liveState')
       .leftJoinAndSelect('venue.city', 'city')
+      .leftJoinAndSelect('venue.offers', 'offers')
       .where('venue.isActive = :isActive', { isActive: true })
       .andWhere('venue.lat IS NOT NULL AND venue.lng IS NOT NULL')
       .andWhere(
@@ -126,5 +157,13 @@ export class VenuesService {
     }
 
     return queryBuilder.orderBy('venue.name', 'ASC').getMany();
+  }
+
+  async findAll(): Promise<Venue[]> {
+    return this.venueRepo.find({
+      where: { isActive: true },
+      relations: ['liveState', 'city', 'offers'],
+      order: { name: 'ASC' },
+    });
   }
 }

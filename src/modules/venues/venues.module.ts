@@ -8,6 +8,7 @@ import { Venue } from './entities/venue.entity';
 import { VenueLiveState } from './entities/venue-live-state.entity';
 import { VenueVibeSchedule } from './entities/venue-vibe-schedule.entity';
 import { UserPreferences } from '../users/entities/user-preferences.entity';
+import { City } from '../cities/entities/city.entity';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { UserPreferences } from '../users/entities/user-preferences.entity';
       VenueLiveState,
       VenueVibeSchedule,
       UserPreferences,
+      City,
     ]),
   ],
   controllers: [VenuesController],

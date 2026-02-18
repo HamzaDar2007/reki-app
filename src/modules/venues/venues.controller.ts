@@ -9,6 +9,11 @@ import {
   UseGuards,
   ForbiddenException,
   Request,
+  Logger,
+  BadRequestException,
+  NotFoundException,
+  InternalServerErrorException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import {
   ApiOkResponse,
@@ -16,6 +21,7 @@ import {
   ApiTags,
   ApiCreatedResponse,
   ApiBearerAuth,
+  ApiResponse,
 } from '@nestjs/swagger';
 import { VenuesService } from './venues.service';
 import { VenueLiveStateService } from './venue-live-state.service';
@@ -40,6 +46,8 @@ import { UserRole } from '../../common/enums/roles.enum';
 @ApiTags('Venues')
 @Controller('venues')
 export class VenuesController {
+  private readonly logger = new Logger(VenuesController.name);
+
   constructor(
     private readonly venuesService: VenuesService,
     private readonly liveStateService: VenueLiveStateService,
@@ -49,116 +57,71 @@ export class VenuesController {
   ) {}
 
   @Get()
-  @ApiQuery({ name: 'cityId', required: false })
-  @ApiQuery({ name: 'lat', required: false, type: Number })
-  @ApiQuery({ name: 'lng', required: false, type: Number })
-  @ApiQuery({ name: 'radius', required: false, type: Number })
-  @ApiQuery({
-    name: 'search',
-    required: false,
-    type: String,
-    description: 'Search venues by name or description',
-  })
-  @ApiQuery({ name: 'categories', required: false, type: [String] })
-  @ApiQuery({ name: 'minBusyness', required: false })
-  @ApiQuery({ name: 'preferredVibes', required: false, type: [String] })
-  @ApiQuery({ name: 'hasOffers', required: false, type: Boolean })
-  @ApiQuery({
-    name: 'sortBy',
-    required: false,
-    enum: ['distance', 'name', 'busyness', 'offers'],
-  })
-  @ApiQuery({
-    name: 'usePreferences',
-    required: false,
-    type: Boolean,
-    description: 'Use user preferences if authenticated',
-  })
-  @ApiBearerAuth()
   @ApiOkResponse({ type: [VenueResponseDto] })
-  async findVenues(
-    @Query('cityId') cityId?: string,
-    @Query('lat') lat?: number,
-    @Query('lng') lng?: number,
-    @Query('radius') radius?: number,
-    @Query('search') search?: string,
-    @Query('categories') categories?: string[],
-    @Query('minBusyness') minBusyness?: string,
-    @Query('preferredVibes') preferredVibes?: string[],
-    @Query('hasOffers') hasOffers?: boolean,
-    @Query('sortBy') sortBy?: 'distance' | 'name' | 'busyness' | 'offers',
-    @Query('usePreferences') usePreferences?: boolean,
-    @Request() req?: any,
-  ): Promise<VenueResponseDto[]> {
-    let venues: Venue[];
+  @ApiResponse({ status: 500, description: 'Internal server error' })
+  async findVenues(): Promise<VenueResponseDto[]> {
+    try {
+      this.logger.log('Fetching all venues');
+      const venues = await this.venuesService.findAll();
 
-    // Load user preferences if authenticated and requested
-    let userPrefs: UserPreferences | null = null;
-    if (usePreferences && req?.user?.id) {
-      userPrefs = await this.userPreferencesRepo.findOne({
-        where: { userId: req.user.id },
+      // Map to response DTOs
+      const venueResponses = venues.map((v: Venue) => {
+        const activeOffersCount = (v.offers || []).filter(
+          (o) => o.isActive,
+        ).length;
+
+        const response: VenueResponseDto = {
+          id: v.id,
+          name: v.name,
+          category: v.category,
+          address: v.address,
+          postcode: v.postcode,
+          lat: v.lat ? Number(v.lat) : undefined,
+          lng: v.lng ? Number(v.lng) : undefined,
+          coverImageUrl: v.coverImageUrl,
+          galleryImages: v.galleryImages,
+          logoUrl: v.logoUrl,
+          description: v.description,
+          isActive: v.isActive,
+          busyness: v.liveState?.busyness,
+          vibe: v.liveState?.vibe,
+          busynessUpdatedAt: v.liveState?.busynessUpdatedAt,
+          vibeUpdatedAt: v.liveState?.vibeUpdatedAt,
+          activeOffersCount,
+          createdAt: v.createdAt,
+          updatedAt: v.updatedAt,
+        };
+
+        return response;
       });
-    }
 
-    // Use user preferences as defaults if no query params provided
-    if (userPrefs && !categories && userPrefs.preferredCategories) {
-      categories = userPrefs.preferredCategories;
+      return venueResponses;
+    } catch (error) {
+      this.logger.error('Failed to fetch venues:', error);
+      throw error;
     }
-    if (userPrefs && !minBusyness && userPrefs.minBusyness) {
-      minBusyness = userPrefs.minBusyness;
-    }
-    if (userPrefs && !preferredVibes && userPrefs.preferredVibes) {
-      preferredVibes = userPrefs.preferredVibes;
-    }
+  }
 
-    // Fetch venues
-    if (search) {
-      // Text search by name or description
-      venues = await this.venuesService.search(search, cityId);
-    } else if (lat && lng) {
-      venues = await this.venuesService.findNearby(lat, lng, radius || 5);
-    } else if (cityId) {
-      venues = await this.venuesService.findByCity(cityId);
-    } else {
-      throw new Error(
-        'Either cityId, search query, or lat/lng coordinates are required',
-      );
-    }
-
-    // Apply preference-based filtering
-    if (categories && categories.length > 0) {
-      venues = venues.filter((v: Venue) => categories.includes(v.category));
-    }
-    if (minBusyness) {
-      venues = venues.filter((v: Venue) => {
-        const busynessLevels = ['QUIET', 'MODERATE', 'BUSY'];
-        const currentLevel = busynessLevels.indexOf(
-          v.liveState?.busyness || 'QUIET',
-        );
-        const minLevel = busynessLevels.indexOf(minBusyness);
-        return currentLevel >= minLevel;
-      });
-    }
-    if (preferredVibes && preferredVibes.length > 0) {
-      venues = venues.filter(
-        (v: Venue) =>
-          v.liveState?.vibe && preferredVibes.includes(v.liveState.vibe),
-      );
-    }
-    if (hasOffers !== undefined) {
-      venues = venues.filter((v: Venue) => {
-        const hasActiveOffers = (v.offers || []).some((o) => o.isActive);
-        return hasOffers ? hasActiveOffers : !hasActiveOffers;
-      });
-    }
-
-    // Map to response DTOs with distance calculation
-    const venueResponses = venues.map((v: Venue) => {
+  @Get(':id')
+  @ApiOkResponse({ type: VenueResponseDto })
+  @ApiResponse({ status: 400, description: 'Invalid venue ID' })
+  @ApiResponse({ status: 404, description: 'Venue not found' })
+  @ApiResponse({ status: 500, description: 'Internal server error' })
+  async findById(@Param('id') id: string): Promise<VenueResponseDto> {
+    try {
+      if (!id || id.trim() === '') {
+        throw new BadRequestException('Venue ID is required');
+      }
+      this.logger.log(`Fetching venue by ID: ${id}`);
+      const v = await this.venuesService.findById(id);
+      if (!v) {
+        throw new NotFoundException(`Venue with ID ${id} not found`);
+      }
       const activeOffersCount = (v.offers || []).filter(
         (o) => o.isActive,
       ).length;
 
-      const response: VenueResponseDto = {
+      return {
         id: v.id,
         name: v.name,
         category: v.category,
@@ -167,8 +130,6 @@ export class VenuesController {
         lat: v.lat ? Number(v.lat) : undefined,
         lng: v.lng ? Number(v.lng) : undefined,
         coverImageUrl: v.coverImageUrl,
-        galleryImages: v.galleryImages,
-        logoUrl: v.logoUrl,
         description: v.description,
         isActive: v.isActive,
         busyness: v.liveState?.busyness,
@@ -179,119 +140,108 @@ export class VenuesController {
         createdAt: v.createdAt,
         updatedAt: v.updatedAt,
       };
-
-      // Calculate distance if search location provided
-      if (lat && lng && v.lat && v.lng) {
-        response.distance = this.venuesService.calculateDistance(
-          lat,
-          lng,
-          Number(v.lat),
-          Number(v.lng),
-        );
-      }
-
-      return response;
-    });
-
-    // Apply sorting
-    if (sortBy === 'distance' && lat && lng) {
-      venueResponses.sort((a, b) => (a.distance || 0) - (b.distance || 0));
-    } else if (sortBy === 'name') {
-      venueResponses.sort((a, b) => a.name.localeCompare(b.name));
-    } else if (sortBy === 'busyness') {
-      const busynessOrder = { QUIET: 0, MODERATE: 1, BUSY: 2 };
-      venueResponses.sort(
-        (a, b) =>
-          (busynessOrder[b.busyness] || 0) - (busynessOrder[a.busyness] || 0),
-      );
-    } else if (sortBy === 'offers') {
-      venueResponses.sort((a, b) => b.activeOffersCount - a.activeOffersCount);
+    } catch (error) {
+      this.logger.error(`Failed to fetch venue ${id}:`, error);
+      throw error;
     }
-
-    return venueResponses;
-  }
-
-  @Get(':id')
-  @ApiOkResponse({ type: VenueResponseDto })
-  async findById(@Param('id') id: string): Promise<VenueResponseDto> {
-    const v = await this.venuesService.findById(id);
-    const activeOffersCount = (v.offers || []).filter((o) => o.isActive).length;
-
-    return {
-      id: v.id,
-      name: v.name,
-      category: v.category,
-      address: v.address,
-      postcode: v.postcode,
-      lat: v.lat ? Number(v.lat) : undefined,
-      lng: v.lng ? Number(v.lng) : undefined,
-      coverImageUrl: v.coverImageUrl,
-      description: v.description,
-      isActive: v.isActive,
-      busyness: v.liveState?.busyness,
-      vibe: v.liveState?.vibe,
-      busynessUpdatedAt: v.liveState?.busynessUpdatedAt,
-      vibeUpdatedAt: v.liveState?.vibeUpdatedAt,
-      activeOffersCount,
-      createdAt: v.createdAt,
-      updatedAt: v.updatedAt,
-    };
   }
 
   @Post()
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.BUSINESS, UserRole.ADMIN)
+  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiCreatedResponse({ type: VenueResponseDto })
+  @ApiResponse({ status: 400, description: 'Invalid input' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 500, description: 'Internal server error' })
   async create(
     @Body() dto: CreateVenueDto,
     @GetUser() user: User,
   ): Promise<VenueResponseDto> {
-    const venue = await this.venuesService.create(dto, user.id);
-    const fullVenue = await this.venuesService.findById(venue.id);
+    try {
+      if (!user?.id) {
+        throw new UnauthorizedException('User not authenticated');
+      }
+      if (!dto || !dto.name) {
+        throw new BadRequestException('Venue name is required');
+      }
+      this.logger.log(`Creating venue for user: ${user.id}`);
+      const venue = await this.venuesService.create(dto, user.id);
+      if (!venue) {
+        throw new Error('Failed to create venue');
+      }
+      const fullVenue = await this.venuesService.findById(venue.id);
+      if (!fullVenue) {
+        throw new NotFoundException('Created venue not found');
+      }
 
-    return {
-      id: fullVenue.id,
-      name: fullVenue.name,
-      category: fullVenue.category,
-      address: fullVenue.address,
-      postcode: fullVenue.postcode,
-      lat: fullVenue.lat ? Number(fullVenue.lat) : undefined,
-      lng: fullVenue.lng ? Number(fullVenue.lng) : undefined,
-      coverImageUrl: fullVenue.coverImageUrl,
-      description: fullVenue.description,
-      isActive: fullVenue.isActive,
-      busyness: fullVenue.liveState?.busyness,
-      vibe: fullVenue.liveState?.vibe,
-      busynessUpdatedAt: fullVenue.liveState?.busynessUpdatedAt,
-      vibeUpdatedAt: fullVenue.liveState?.vibeUpdatedAt,
-      activeOffersCount: 0,
-      createdAt: fullVenue.createdAt,
-      updatedAt: fullVenue.updatedAt,
-    };
+      return {
+        id: fullVenue.id,
+        name: fullVenue.name,
+        category: fullVenue.category,
+        address: fullVenue.address,
+        postcode: fullVenue.postcode,
+        lat: fullVenue.lat ? Number(fullVenue.lat) : undefined,
+        lng: fullVenue.lng ? Number(fullVenue.lng) : undefined,
+        coverImageUrl: fullVenue.coverImageUrl,
+        description: fullVenue.description,
+        isActive: fullVenue.isActive,
+        busyness: fullVenue.liveState?.busyness,
+        vibe: fullVenue.liveState?.vibe,
+        busynessUpdatedAt: fullVenue.liveState?.busynessUpdatedAt,
+        vibeUpdatedAt: fullVenue.liveState?.vibeUpdatedAt,
+        activeOffersCount: 0,
+        createdAt: fullVenue.createdAt,
+        updatedAt: fullVenue.updatedAt,
+      };
+    } catch (error) {
+      this.logger.error('Failed to create venue:', error);
+      throw error;
+    }
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard, VenueOwnershipGuard)
   @Patch(':id/live-state')
-  @UseGuards(JwtAuthGuard, RolesGuard, VenueOwnershipGuard)
   @Roles(UserRole.BUSINESS, UserRole.ADMIN)
   @ApiBearerAuth()
   @ApiOkResponse({ description: 'Live state updated' })
+  @ApiResponse({ status: 400, description: 'Invalid input' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({ status: 404, description: 'Venue not found' })
+  @ApiResponse({ status: 500, description: 'Internal server error' })
   async updateLiveState(
     @Param('id') venueId: string,
     @Body() dto: UpdateVenueLiveStateDto,
     @GetUser() user: User,
   ) {
-    // VenueOwnershipGuard already checked ownership, so we can proceed
-    const updated = await this.liveStateService.update(venueId, dto);
-    return {
-      venueId,
-      busyness: updated.busyness,
-      vibe: updated.vibe,
-      busynessUpdatedAt: updated.busynessUpdatedAt,
-      vibeUpdatedAt: updated.vibeUpdatedAt,
-      updatedAt: updated.updatedAt,
-    };
+    try {
+      if (!user?.id) {
+        throw new UnauthorizedException('User not authenticated');
+      }
+      if (!venueId || venueId.trim() === '') {
+        throw new BadRequestException('Venue ID is required');
+      }
+      if (!dto) {
+        throw new BadRequestException('Update data is required');
+      }
+      this.logger.log(`Updating live state for venue: ${venueId}`);
+      // VenueOwnershipGuard already checked ownership, so we can proceed
+      const updated = await this.liveStateService.update(venueId, dto);
+      if (!updated) {
+        throw new NotFoundException(`Venue with ID ${venueId} not found`);
+      }
+      return {
+        venueId,
+        busyness: updated.busyness,
+        vibe: updated.vibe,
+        busynessUpdatedAt: updated.busynessUpdatedAt,
+        vibeUpdatedAt: updated.vibeUpdatedAt,
+        updatedAt: updated.updatedAt,
+      };
+    } catch (error) {
+      this.logger.error(`Failed to update live state for ${venueId}:`, error);
+      throw error;
+    }
   }
 
   @Post(':id/vibe-schedules')
@@ -299,47 +249,91 @@ export class VenuesController {
   @Roles(UserRole.BUSINESS, UserRole.ADMIN)
   @ApiBearerAuth()
   @ApiCreatedResponse({ description: 'Vibe schedule created' })
+  @ApiResponse({ status: 400, description: 'Invalid input' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({ status: 404, description: 'Venue not found' })
+  @ApiResponse({ status: 500, description: 'Internal server error' })
   async createVibeSchedule(
     @Param('id') venueId: string,
     @Body() dto: CreateVibeScheduleDto,
     @GetUser() user: User,
   ) {
-    // VenueOwnershipGuard already checked ownership, so we can proceed
-    const created = await this.vibeScheduleService.create(venueId, dto);
-    return {
-      id: created.id,
-      venueId,
-      dayOfWeek: created.dayOfWeek,
-      startTime: created.startTime,
-      endTime: created.endTime,
-      vibe: created.vibe,
-      priority: created.priority,
-      isActive: created.isActive,
-      createdAt: created.createdAt,
-      updatedAt: created.updatedAt,
-    };
+    try {
+      if (!user?.id) {
+        throw new UnauthorizedException('User not authenticated');
+      }
+      if (!venueId || venueId.trim() === '') {
+        throw new BadRequestException('Venue ID is required');
+      }
+      if (!dto) {
+        throw new BadRequestException('Vibe schedule data is required');
+      }
+      this.logger.log(`Creating vibe schedule for venue: ${venueId}`);
+      // VenueOwnershipGuard already checked ownership, so we can proceed
+      const created = await this.vibeScheduleService.create(venueId, dto);
+      if (!created) {
+        throw new Error('Failed to create vibe schedule');
+      }
+      return {
+        id: created.id,
+        venueId,
+        dayOfWeek: created.dayOfWeek,
+        startTime: created.startTime,
+        endTime: created.endTime,
+        vibe: created.vibe,
+        priority: created.priority,
+        isActive: created.isActive,
+        createdAt: created.createdAt,
+        updatedAt: created.updatedAt,
+      };
+    } catch (error) {
+      this.logger.error(
+        `Failed to create vibe schedule for ${venueId}:`,
+        error,
+      );
+      throw error;
+    }
   }
 
   @Get(':id/vibe-schedules')
   @ApiOkResponse({ description: 'Vibe schedules for venue' })
+  @ApiResponse({ status: 400, description: 'Invalid venue ID' })
+  @ApiResponse({ status: 404, description: 'Venue not found' })
+  @ApiResponse({ status: 500, description: 'Internal server error' })
   async getVibeSchedules(@Param('id') venueId: string) {
-    const schedules = await this.vibeScheduleService.findByVenue(venueId);
-    return schedules.map((s) => ({
-      id: s.id,
-      venueId,
-      dayOfWeek: s.dayOfWeek,
-      startTime: s.startTime,
-      endTime: s.endTime,
-      vibe: s.vibe,
-      priority: s.priority,
-      isActive: s.isActive,
-      createdAt: s.createdAt,
-      updatedAt: s.updatedAt,
-    }));
+    try {
+      if (!venueId || venueId.trim() === '') {
+        throw new BadRequestException('Venue ID is required');
+      }
+      this.logger.log(`Fetching vibe schedules for venue: ${venueId}`);
+      const schedules = await this.vibeScheduleService.findByVenue(venueId);
+      if (!schedules) {
+        return [];
+      }
+      return schedules.map((s) => ({
+        id: s.id,
+        venueId,
+        dayOfWeek: s.dayOfWeek,
+        startTime: s.startTime,
+        endTime: s.endTime,
+        vibe: s.vibe,
+        priority: s.priority,
+        isActive: s.isActive,
+        createdAt: s.createdAt,
+        updatedAt: s.updatedAt,
+      }));
+    } catch (error) {
+      this.logger.error(`Failed to fetch vibe schedules for ${venueId}:`, error);
+      throw error;
+    }
   }
 
   @Get(':id/current-vibe')
   @ApiOkResponse({ description: 'Computed current vibe based on schedule' })
+  @ApiResponse({ status: 400, description: 'Invalid venue ID' })
+  @ApiResponse({ status: 404, description: 'Venue not found' })
+  @ApiResponse({ status: 500, description: 'Internal server error' })
   async computeCurrentVibe(@Param('id') venueId: string): Promise<{
     vibe: VibeType | null;
     nextChange?: {
@@ -348,10 +342,20 @@ export class VenuesController {
       dayOfWeek: number;
     } | null;
   }> {
-    const vibe = await this.vibeScheduleService.computeCurrentVibe(venueId);
-    const nextChange =
-      await this.vibeScheduleService.getNextVibeChange(venueId);
+    try {
+      if (!venueId || venueId.trim() === '') {
+        throw new BadRequestException('Venue ID is required');
+      }
+      this.logger.log(`Computing current vibe for venue: ${venueId}`);
+      const vibe = await this.vibeScheduleService.computeCurrentVibe(venueId);
+      const nextChange = await this.vibeScheduleService.getNextVibeChange(
+        venueId,
+      );
 
-    return { vibe, nextChange };
+      return { vibe, nextChange };
+    } catch (error) {
+      this.logger.error(`Failed to compute current vibe for ${venueId}:`, error);
+      throw error;
+    }
   }
 }

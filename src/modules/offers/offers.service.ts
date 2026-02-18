@@ -15,6 +15,7 @@ import {
 import { CreateOfferDto } from './dto/create-offer.dto';
 import { RedeemOfferDto } from './dto/redeem-offer.dto';
 import { NotificationsService } from '../notifications/notifications.service';
+import { Venue } from '../venues/entities/venue.entity';
 
 @Injectable()
 export class OffersService {
@@ -34,63 +35,85 @@ export class OffersService {
     private readonly redemptionRepo: Repository<OfferRedemption>,
     @InjectRepository(VenueLiveState)
     private readonly liveStateRepo: Repository<VenueLiveState>,
+    @InjectRepository(Venue)
+    private readonly venueRepo: Repository<Venue>,
     private readonly notificationsService: NotificationsService,
   ) {}
 
   async create(dto: CreateOfferDto): Promise<Offer> {
-    const startsAt = new Date(dto.startsAt);
-    const endsAt = new Date(dto.endsAt);
+    try {
+      const startsAt = new Date(dto.startsAt);
+      const endsAt = new Date(dto.endsAt);
 
-    if (startsAt >= endsAt) {
-      throw new BadRequestException('Start date must be before end date');
-    }
-
-    const offer = this.offerRepo.create({
-      ...dto,
-      venue: { id: dto.venueId },
-      startsAt,
-      endsAt,
-      minBusyness: dto.minBusyness ?? BusynessLevel.QUIET,
-      isActive: dto.isActive ?? true,
-    });
-
-    const savedOffer = await this.offerRepo.save(offer);
-
-    this.logger.log(`=== OFFER CREATED: ${savedOffer.id} ===`);
-
-    // Load venue details for notification
-    const fullOffer = await this.offerRepo.findOne({
-      where: { id: savedOffer.id },
-      relations: ['venue'],
-    });
-
-    this.logger.log(`Full offer loaded: ${fullOffer ? 'YES' : 'NO'}`);
-    if (fullOffer) {
-      this.logger.log(
-        `Offer details: isActive=${fullOffer.isActive}, startsAt=${fullOffer.startsAt}, now=${new Date()}`,
-      );
-    }
-
-    // Trigger notification if offer is active and starts now or in the future
-    if (fullOffer && fullOffer.isActive && fullOffer.startsAt <= new Date()) {
-      this.logger.log('Triggering notification...');
-      try {
-        await this.notificationsService.notifyOfferAvailable(
-          fullOffer.id,
-          fullOffer.venue.id,
-          fullOffer.venue.name,
-          fullOffer.title,
-          fullOffer.description || '',
-        );
-        this.logger.log('Notification triggered successfully');
-      } catch (error) {
-        this.logger.error(`Failed to trigger notification: ${error.message}`);
+      // Validate date range
+      if (startsAt >= endsAt) {
+        throw new BadRequestException('Start date must be before end date');
       }
-    } else {
-      this.logger.log('Skipping notification (conditions not met)');
-    }
 
-    return savedOffer;
+      // Validate that the venue exists
+      const venue = await this.venueRepo.findOne({
+        where: { id: dto.venueId, isActive: true },
+      });
+
+      if (!venue) {
+        throw new BadRequestException(
+          `Venue with ID "${dto.venueId}" does not exist or is inactive`,
+        );
+      }
+
+      const offer = this.offerRepo.create({
+        ...dto,
+        venue: { id: dto.venueId },
+        startsAt,
+        endsAt,
+        minBusyness: dto.minBusyness ?? BusynessLevel.QUIET,
+        isActive: dto.isActive ?? true,
+      });
+
+      const savedOffer = await this.offerRepo.save(offer);
+
+      this.logger.log(`=== OFFER CREATED: ${savedOffer.id} ===`);
+
+      // Load venue details for notification
+      const fullOffer = await this.offerRepo.findOne({
+        where: { id: savedOffer.id },
+        relations: ['venue'],
+      });
+
+      this.logger.log(`Full offer loaded: ${fullOffer ? 'YES' : 'NO'}`);
+      if (fullOffer) {
+        this.logger.log(
+          `Offer details: isActive=${fullOffer.isActive}, startsAt=${fullOffer.startsAt}, now=${new Date()}`,
+        );
+      }
+
+      // Trigger notification if offer is active and starts now or in the future
+      if (fullOffer && fullOffer.isActive && fullOffer.startsAt <= new Date()) {
+        this.logger.log('Triggering notification...');
+        try {
+          await this.notificationsService.notifyOfferAvailable(
+            fullOffer.id,
+            fullOffer.venue.id,
+            fullOffer.venue.name,
+            fullOffer.title,
+            fullOffer.description || '',
+          );
+          this.logger.log('Notification triggered successfully');
+        } catch (error) {
+          this.logger.error(`Failed to trigger notification: ${error.message}`);
+        }
+      } else {
+        this.logger.log('Skipping notification (conditions not met)');
+      }
+
+      return savedOffer;
+    } catch (error) {
+      if ((error as any).status === 400) {
+        throw error;
+      }
+      this.logger.error(`Failed to create offer: ${error.message}`);
+      throw error;
+    }
   }
 
   async findById(id: string): Promise<Offer> {
@@ -230,5 +253,13 @@ export class OffersService {
     const offer = await this.findById(id);
     offer.isActive = isActive;
     return this.offerRepo.save(offer);
+  }
+
+  async findAll(): Promise<Offer[]> {
+    return this.offerRepo.find({
+      where: { isActive: true },
+      relations: ['venue'],
+      order: { startsAt: 'DESC' },
+    });
   }
 }

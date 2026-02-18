@@ -1,4 +1,10 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  ConflictException,
+  BadRequestException,
+  Logger,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -14,6 +20,8 @@ import { UserRole } from '../../common/enums/roles.enum';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private readonly jwtService: JwtService,
     @InjectRepository(User)
@@ -28,29 +36,64 @@ export class AuthService {
   async register(
     dto: RegisterDto,
   ): Promise<{ user: User; access_token: string; refresh_token: string }> {
-    const hash = await bcrypt.hash(dto.password, 10);
-    const user = this.userRepo.create({
-      email: dto.email,
-      passwordHash: hash,
-      role: dto.role || UserRole.USER, // Default to USER role
-    });
+    try {
+      // Validate input
+      if (!dto.email || !dto.password) {
+        throw new BadRequestException('Email and password are required');
+      }
 
-    const savedUser = await this.userRepo.save(user);
+      // Check if user already exists
+      const existingUser = await this.userRepo.findOne({
+        where: { email: dto.email },
+      });
 
-    // Create default preferences for new user
-    const prefs = this.prefsRepo.create({ user: savedUser });
-    await this.prefsRepo.save(prefs);
+      if (existingUser) {
+        throw new ConflictException(
+          'Email already exists. Please use a different email address.',
+        );
+      }
 
-    const tokens = await this.generateTokens(savedUser);
+      const hash = await bcrypt.hash(dto.password, 10);
+      const user = this.userRepo.create({
+        email: dto.email,
+        passwordHash: hash,
+        role: dto.role || UserRole.USER, // Default to USER role
+      });
 
-    // Save refresh token
-    savedUser.refreshToken = await bcrypt.hash(tokens.refresh_token, 10);
-    await this.userRepo.save(savedUser);
+      const savedUser = await this.userRepo.save(user);
 
-    return {
-      user: savedUser,
-      ...tokens,
-    };
+      // Create default preferences for new user
+      const prefs = this.prefsRepo.create({ user: savedUser });
+      await this.prefsRepo.save(prefs);
+
+      const tokens = await this.generateTokens(savedUser);
+
+      // Save refresh token
+      savedUser.refreshToken = await bcrypt.hash(tokens.refresh_token, 10);
+      await this.userRepo.save(savedUser);
+
+      this.logger.log(`User registered successfully: ${dto.email}`);
+
+      return {
+        user: savedUser,
+        ...tokens,
+      };
+    } catch (error) {
+      // Check for database unique constraint error
+      if ((error as any)?.code === '23505') {
+        throw new ConflictException(
+          'Email already exists. Please use a different email address.',
+        );
+      }
+
+      // Re-throw if already a proper exception
+      if (error instanceof ConflictException || error instanceof BadRequestException) {
+        throw error;
+      }
+
+      this.logger.error('Registration failed:', error);
+      throw error;
+    }
   }
 
   async login(

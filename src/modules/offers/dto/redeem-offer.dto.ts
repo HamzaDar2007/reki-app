@@ -10,6 +10,15 @@ export class RedeemOfferDto {
   offerId: string;
 
   @ApiProperty({
+    example: 'user-id-here',
+    description: 'ID of the user redeeming the offer',
+    required: false,
+  })
+  @IsOptional()
+  @IsUUID()
+  userId?: string;
+
+  @ApiProperty({
     example: 'DEMO',
     description: 'Source of the redemption (DEMO, INVESTOR, INTERNAL, etc.)',
     required: false,
@@ -17,5 +26,5 @@ export class RedeemOfferDto {
   @IsOptional()
   @IsString()
   @Length(1, 32)
-  source?: string; // DEMO, INVESTOR, INTERNAL, etc.
+  source?: string;
 }
