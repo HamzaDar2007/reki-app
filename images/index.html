@@ -3,247 +3,396 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>REKI - 20 Venue Images</title>
+    <title>REKI Images Gallery</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            padding: 20px;
             min-height: 100vh;
+            padding: 40px 20px;
         }
+
         .container {
             max-width: 1400px;
             margin: 0 auto;
         }
-        h1 {
-            color: white;
+
+        header {
             text-align: center;
+            color: white;
+            margin-bottom: 50px;
+        }
+
+        h1 {
+            font-size: 3em;
             margin-bottom: 10px;
-            font-size: 2.5em;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
         }
+
         .subtitle {
-            color: rgba(255,255,255,0.9);
-            text-align: center;
-            margin-bottom: 30px;
-            font-size: 1.2em;
+            font-size: 1.1em;
+            opacity: 0.9;
         }
-        .stats {
-            background: rgba(255,255,255,0.95);
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 30px;
-            display: flex;
-            justify-content: space-around;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-        }
-        .stat {
-            text-align: center;
-        }
-        .stat-number {
-            font-size: 2em;
-            font-weight: bold;
-            color: #667eea;
-        }
-        .stat-label {
-            color: #666;
-            margin-top: 5px;
-        }
-        .category {
+
+        .categories {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 40px;
             margin-bottom: 40px;
         }
-        .category-title {
-            color: white;
-            font-size: 1.8em;
-            margin-bottom: 20px;
-            padding: 10px 20px;
-            background: rgba(255,255,255,0.2);
-            border-radius: 10px;
-            backdrop-filter: blur(10px);
-        }
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 25px;
-        }
-        .card {
+
+        .category {
             background: white;
-            border-radius: 15px;
+            border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
-        .card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+
+        .category:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 50px rgba(0,0,0,0.25);
         }
-        .card-image {
-            width: 100%;
-            height: 200px;
-            object-fit: cover;
-            background: #f0f0f0;
-        }
-        .card-content {
+
+        .category-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
             padding: 20px;
-        }
-        .card-title {
-            font-size: 1.3em;
+            font-size: 1.5em;
             font-weight: bold;
-            color: #333;
-            margin-bottom: 10px;
         }
-        .card-url {
+
+        .images-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0;
+        }
+
+        .image-item {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            transition: background 0.2s ease;
+        }
+
+        .image-item:last-child {
+            border-bottom: none;
+        }
+
+        .image-item:hover {
+            background: #f5f5f5;
+        }
+
+        .image-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 0.95em;
+        }
+
+        .image-path {
+            font-family: 'Monaco', 'Courier New', monospace;
+            background: #f0f0f0;
+            padding: 8px 12px;
+            border-radius: 6px;
             font-size: 0.85em;
             color: #666;
             word-break: break-all;
-            background: #f8f8f8;
-            padding: 10px;
-            border-radius: 5px;
-            font-family: 'Courier New', monospace;
+            margin-bottom: 8px;
         }
-        .badge {
-            display: inline-block;
-            padding: 5px 12px;
-            background: #667eea;
+
+        .image-preview {
+            width: 100%;
+            max-height: 150px;
+            object-fit: cover;
+            border-radius: 6px;
+            background: #f5f5f5;
+        }
+
+        .stats {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            margin-bottom: 30px;
+        }
+
+        .stats h2 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            border-radius: 20px;
-            font-size: 0.8em;
+            border-radius: 8px;
+        }
+
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 0.95em;
+            opacity: 0.9;
+        }
+
+        .info-box {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            margin-bottom: 30px;
+        }
+
+        .info-box h2 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .info-box p {
+            color: #666;
+            line-height: 1.6;
             margin-bottom: 10px;
         }
-        .error {
-            color: red;
-            padding: 10px;
-            background: #ffe0e0;
-            border-radius: 5px;
+
+        .code-block {
+            background: #f5f5f5;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 0.9em;
+            overflow-x: auto;
             margin-top: 10px;
         }
-        .loading {
+
+        footer {
             text-align: center;
             color: white;
-            font-size: 1.5em;
-            padding: 50px;
+            padding: 30px 0;
+            margin-top: 50px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2em;
+            }
+
+            .categories {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🎉 REKI MVP - Venue Images</h1>
-        <p class="subtitle">All 20 Manchester venues with images</p>
-        
-        <div class="stats">
-            <div class="stat">
-                <div class="stat-number" id="totalVenues">20</div>
-                <div class="stat-label">Total Venues</div>
-            </div>
-            <div class="stat">
-                <div class="stat-number" id="barsCount">5</div>
-                <div class="stat-label">Bars</div>
-            </div>
-            <div class="stat">
-                <div class="stat-number" id="casinosCount">5</div>
-                <div class="stat-label">Casinos</div>
-            </div>
-            <div class="stat">
-                <div class="stat-number" id="restaurantsCount">10</div>
-                <div class="stat-label">Restaurants</div>
+        <header>
+            <h1>🎭 REKI Venues Image Gallery</h1>
+            <p class="subtitle">20 Manchester Venues with Cover Images</p>
+        </header>
+
+        <div class="info-box">
+            <h2>📸 Image Catalog</h2>
+            <p>This directory contains venue cover images used in the REKI Manchester application. All images are organized by venue category and served through the static files endpoint.</p>
+            <p><strong>Base URL:</strong> <code>/images/</code></p>
+            <p><strong>Available Categories:</strong></p>
+            <div class="code-block">
+bar/ - Cocktail bars and nightlife venues (5 images)<br>
+casino/ - Gaming and casino venues (5 images)<br>
+hotels/ - Hotel restaurants and luxury dining (5 images)<br>
+restorantes/ - Restaurants and dining establishments (5 images)
             </div>
         </div>
 
-        <div id="content" class="loading">Loading venues...</div>
-    </div>
-
-    <script>
-        const API_BASE = 'http://localhost:3000';
-        const CITY_ID = '3ff5e526-7819-45d5-9995-bd6db919c9b2';
-
-        async function loadVenues() {
-            try {
-                const response = await fetch(`${API_BASE}/venues?cityId=${CITY_ID}`);
-                const venues = await response.json();
-
-                // Group by category
-                const bars = venues.filter(v => v.category === 'BAR');
-                const casinos = venues.filter(v => v.category === 'CASINO');
-                const restaurants = venues.filter(v => v.category === 'RESTAURANT');
-
-                // Update stats
-                document.getElementById('totalVenues').textContent = venues.length;
-                document.getElementById('barsCount').textContent = bars.length;
-                document.getElementById('casinosCount').textContent = casinos.length;
-                document.getElementById('restaurantsCount').textContent = restaurants.length;
-
-                // Render categories
-                const content = document.getElementById('content');
-                content.className = '';
-                content.innerHTML = '';
-
-                renderCategory('🍺 Bars', bars, content);
-                renderCategory('🎰 Casinos', casinos, content);
-                renderCategory('🍽️ Restaurants', restaurants, content);
-
-            } catch (error) {
-                document.getElementById('content').innerHTML = `
-                    <div class="error">
-                        <strong>Error loading venues:</strong> ${error.message}<br>
-                        Make sure the server is running at ${API_BASE}
-                    </div>
-                `;
-            }
-        }
-
-        function renderCategory(title, venues, container) {
-            if (venues.length === 0) return;
-
-            const categoryDiv = document.createElement('div');
-            categoryDiv.className = 'category';
-            
-            const titleDiv = document.createElement('div');
-            titleDiv.className = 'category-title';
-            titleDiv.textContent = `${title} (${venues.length})`;
-            categoryDiv.appendChild(titleDiv);
-
-            const grid = document.createElement('div');
-            grid.className = 'grid';
-
-            venues.forEach(venue => {
-                const card = createVenueCard(venue);
-                grid.appendChild(card);
-            });
-
-            categoryDiv.appendChild(grid);
-            container.appendChild(categoryDiv);
-        }
-
-        function createVenueCard(venue) {
-            const card = document.createElement('div');
-            card.className = 'card';
-
-            const imageUrl = `${API_BASE}${venue.coverImageUrl}`;
-            
-            card.innerHTML = `
-                <img 
-                    src="${imageUrl}" 
-                    alt="${venue.name}"
-                    class="card-image"
-                    onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22200%22><rect fill=%22%23f0f0f0%22 width=%22300%22 height=%22200%22/><text x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%23999%22>Image not found</text></svg>'"
-                >
-                <div class="card-content">
-                    <span class="badge">${venue.category}</span>
-                    <div class="card-title">${venue.name}</div>
-                    <div class="card-url">${venue.coverImageUrl}</div>
+        <div class="stats">
+            <h2>📊 Image Statistics</h2>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <span class="stat-number">20</span>
+                    <span class="stat-label">Total Venues</span>
                 </div>
-            `;
+                <div class="stat-item">
+                    <span class="stat-number">20</span>
+                    <span class="stat-label">Total Images</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">4</span>
+                    <span class="stat-label">Categories</span>
+                </div>
+            </div>
+        </div>
 
-            return card;
-        }
+        <div class="categories">
+            <!-- BARS -->
+            <div class="category">
+                <div class="category-header">🍸 Bars</div>
+                <div class="images-grid">
+                    <div class="image-item">
+                        <div class="image-name">Cloud 23</div>
+                        <div class="image-path">/images/bar/Cloud 23.jpg</div>
+                        <img src="./bar/Cloud 23.jpg" alt="Cloud 23" class="image-preview">
+                    </div>
+                    <div class="image-item">
+                        <div class="image-name">NQ64</div>
+                        <div class="image-path">/images/bar/NQ64.jpg</div>
+                        <img src="./bar/NQ64.jpg" alt="NQ64" class="image-preview">
+                    </div>
+                    <div class="image-item">
+                        <div class="image-name">Albert's Schloss</div>
+                        <div class="image-path">/images/bar/Albert's Schloss.jpg</div>
+                        <img src="./bar/Albert's Schloss.jpg" alt="Albert's Schloss" class="image-preview">
+                    </div>
+                    <div class="image-item">
+                        <div class="image-name">Schofield's Bar</div>
+                        <div class="image-path">/images/bar/Schofield's Bar.jpg</div>
+                        <img src="./bar/Schofield's Bar.jpg" alt="Schofield's Bar" class="image-preview">
+                    </div>
+                    <div class="image-item">
+                        <div class="image-name">The Edinburgh Castle</div>
+                        <div class="image-path">/images/bar/The Edinburgh Castle.jpg</div>
+                        <img src="./bar/The Edinburgh Castle.jpg" alt="The Edinburgh Castle" class="image-preview">
+                    </div>
+                </div>
+            </div>
 
-        // Load venues on page load
-        loadVenues();
-    </script>
+            <!-- CASINOS -->
+            <div class="category">
+                <div class="category-header">🎰 Casinos</div>
+                <div class="images-grid">
+                    <div class="image-item">
+                        <div class="image-name">Admiral Casino</div>
+                        <div class="image-path">/images/casino/Admiral Casino.avif</div>
+                        <img src="./casino/Admiral Casino.avif" alt="Admiral Casino" class="image-preview">
+                    </div>
+                    <div class="image-item">
+                        <div class="image-name">Genting Casino Manchester</div>
+                        <div class="image-path">/images/casino/Genting Casino Manchester.jpg</div>
+                        <img src="./casino/Genting Casino Manchester.jpg" alt="Genting Casino Manchester" class="image-preview">
+                    </div>
+                    <div class="image-item">
+                        <div class="image-name">Grosvenor Casino</div>
+                        <div class="image-path">/images/casino/Grosvenor Casino.jpg</div>
+                        <img src="./casino/Grosvenor Casino.jpg" alt="Grosvenor Casino" class="image-preview">
+                    </div>
+                    <div class="image-item">
+                        <div class="image-name">manchester235 Casino</div>
+                        <div class="image-path">/images/casino/manchester235-casino.jpg</div>
+                        <img src="./casino/manchester235-casino.jpg" alt="manchester235 Casino" class="image-preview">
+                    </div>
+                    <div class="image-item">
+                        <div class="image-name">Napoleons Casino</div>
+                        <div class="image-path">/images/casino/napoleons-casino-manchester.jpg</div>
+                        <img src="./casino/napoleons-casino-manchester.jpg" alt="Napoleons Casino" class="image-preview">
+                    </div>
+                </div>
+            </div>
+
+            <!-- HOTELS -->
+            <div class="category">
+                <div class="category-header">🏨 Hotels</div>
+                <div class="images-grid">
+                    <div class="image-item">
+                        <div class="image-name">Hotel Gotham</div>
+                        <div class="image-path">/images/hotels/Hotel-Gotham.avif</div>
+                        <img src="./hotels/Hotel-Gotham.avif" alt="Hotel Gotham" class="image-preview">
+                    </div>
+                    <div class="image-item">
+                        <div class="image-name">Dakota Manchester</div>
+                        <div class="image-path">/images/hotels/Dakota Manchester.jpg</div>
+                        <img src="./hotels/Dakota Manchester.jpg" alt="Dakota Manchester" class="image-preview">
+                    </div>
+                    <div class="image-item">
+                        <div class="image-name">Kimpton Clocktower</div>
+                        <div class="image-path">/images/hotels/Kimpton Clocktower.jpg</div>
+                        <img src="./hotels/Kimpton Clocktower.jpg" alt="Kimpton Clocktower" class="image-preview">
+                    </div>
+                    <div class="image-item">
+                        <div class="image-name">The Edwardian Manchester</div>
+                        <div class="image-path">/images/hotels/The Edwardian Manchester.jpg</div>
+                        <img src="./hotels/The Edwardian Manchester.jpg" alt="The Edwardian Manchester" class="image-preview">
+                    </div>
+                    <div class="image-item">
+                        <div class="image-name">The Stock Exchange Hotel</div>
+                        <div class="image-path">/images/hotels/The Stock Exchange Hotel.jpg</div>
+                        <img src="./hotels/The Stock Exchange Hotel.jpg" alt="The Stock Exchange Hotel" class="image-preview">
+                    </div>
+                </div>
+            </div>
+
+            <!-- RESTAURANTS -->
+            <div class="category">
+                <div class="category-header">🍽️ Restaurants</div>
+                <div class="images-grid">
+                    <div class="image-item">
+                        <div class="image-name">Dishoom</div>
+                        <div class="image-path">/images/restorantes/Dishoom.avif</div>
+                        <img src="./restorantes/Dishoom.avif" alt="Dishoom" class="image-preview">
+                    </div>
+                    <div class="image-item">
+                        <div class="image-name">20 Stories</div>
+                        <div class="image-path">/images/restorantes/20 Stories.jpg</div>
+                        <img src="./restorantes/20 Stories.jpg" alt="20 Stories" class="image-preview">
+                    </div>
+                    <div class="image-item">
+                        <div class="image-name">The Black Friar</div>
+                        <div class="image-path">/images/restorantes/The Black Friar.jpg</div>
+                        <img src="./restorantes/The Black Friar.jpg" alt="The Black Friar" class="image-preview">
+                    </div>
+                    <div class="image-item">
+                        <div class="image-name">mana</div>
+                        <div class="image-path">/images/restorantes/mana.webp</div>
+                        <img src="./restorantes/mana.webp" alt="mana" class="image-preview">
+                    </div>
+                    <div class="image-item">
+                        <div class="image-name">skof</div>
+                        <div class="image-path">/images/restorantes/skof.webp</div>
+                        <img src="./restorantes/skof.webp" alt="skof" class="image-preview">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-box">
+            <h2>🔗 API Integration</h2>
+            <p>These images are referenced in the venues database with the following URL format:</p>
+            <div class="code-block">
+{<br>
+&nbsp;&nbsp;"id": "uuid",<br>
+&nbsp;&nbsp;"name": "Venue Name",<br>
+&nbsp;&nbsp;"category": "CATEGORY",<br>
+&nbsp;&nbsp;"cover_image_url": "/images/category/Image Name.ext",<br>
+&nbsp;&nbsp;"gallery_images": ["image1.jpg", "image2.jpg"],<br>
+&nbsp;&nbsp;...<br>
+}
+            </div>
+            <p style="margin-top: 15px;"><strong>Supported Formats:</strong> JPG, AVIF, WEBP, PNG</p>
+        </div>
+
+        <footer>
+            <p>REKI Venues Image Catalog &copy; 2026 | Manchester Nightlife Discovery Platform</p>
+        </footer>
+    </div>
 </body>
 </html>
