@@ -1,7 +1,7 @@
 export enum UserRole {
-  USER = 'USER',           // Regular users - can browse, view offers
-  BUSINESS = 'BUSINESS',   // Business owners - can manage venues, create offers
-  ADMIN = 'ADMIN',         // Platform admins - full access
+  USER = 'USER', // Regular users - can browse, view offers
+  BUSINESS = 'BUSINESS', // Business owners - can manage venues, create offers
+  ADMIN = 'ADMIN', // Platform admins - full access
 }
 
 export enum Permission {
@@ -13,7 +13,7 @@ export enum Permission {
   DELETE_OWN_VENUE = 'DELETE_OWN_VENUE',
   DELETE_ANY_VENUE = 'DELETE_ANY_VENUE',
   UPDATE_VENUE_LIVE_STATE = 'UPDATE_VENUE_LIVE_STATE',
-  
+
   // Offer permissions
   VIEW_OFFERS = 'VIEW_OFFERS',
   REDEEM_OFFER = 'REDEEM_OFFER',
@@ -22,12 +22,12 @@ export enum Permission {
   UPDATE_ANY_OFFER = 'UPDATE_ANY_OFFER',
   DELETE_OWN_OFFER = 'DELETE_OWN_OFFER',
   DELETE_ANY_OFFER = 'DELETE_ANY_OFFER',
-  
+
   // Analytics permissions
   VIEW_OWN_ANALYTICS = 'VIEW_OWN_ANALYTICS',
   VIEW_ALL_ANALYTICS = 'VIEW_ALL_ANALYTICS',
   VIEW_PLATFORM_ANALYTICS = 'VIEW_PLATFORM_ANALYTICS',
-  
+
   // User management permissions
   MANAGE_USERS = 'MANAGE_USERS',
   MANAGE_NOTIFICATIONS = 'MANAGE_NOTIFICATIONS',

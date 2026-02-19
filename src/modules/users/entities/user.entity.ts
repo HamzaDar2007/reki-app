@@ -42,8 +42,7 @@ export class User {
   @Column({ default: true })
   isActive: boolean;
 
-  @OneToOne(() => UserPreferences, { cascade: true })
-  @JoinColumn()
+  @OneToOne(() => UserPreferences, (prefs) => prefs.user, { cascade: true })
   preferences: UserPreferences;
 
   @OneToMany(() => Venue, (venue) => venue.owner)

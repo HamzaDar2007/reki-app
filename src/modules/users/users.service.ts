@@ -80,9 +80,9 @@ export class UsersService {
     dto: UpdatePreferencesDto,
   ): Promise<UserPreferences> {
     const prefs = await this.prefsRepo.findOne({
-      where: { user: { id: userId } },
+      where: { userId },
     });
-    if (!prefs) throw new Error('Preferences not found');
+    if (!prefs) throw new NotFoundException('User preferences not found');
 
     Object.assign(prefs, dto);
     return this.prefsRepo.save(prefs);
