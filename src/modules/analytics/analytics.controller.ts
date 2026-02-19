@@ -53,7 +53,7 @@ export class AnalyticsController {
         throw new UnauthorizedException('User not authenticated');
       }
       this.logger.log(`Fetching owner dashboard for user: ${user.id}`);
-      return await this.analyticsService.getOwnerDashboard(user.id);
+      return await this.analyticsService.getOwnerDashboard(user.id, user.role);
     } catch (error) {
       this.logger.error('Failed to fetch owner dashboard:', error);
       throw error;

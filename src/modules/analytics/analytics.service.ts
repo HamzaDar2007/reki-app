@@ -5,6 +5,7 @@ import { Venue } from '../venues/entities/venue.entity';
 import { Offer } from '../offers/entities/offer.entity';
 import { OfferRedemption } from '../offers/entities/offer-redemption.entity';
 import { Notification } from '../notifications/entities/notification.entity';
+import { UserRole } from '../../common/enums/roles.enum';
 
 @Injectable()
 export class AnalyticsService {
@@ -279,7 +280,7 @@ export class AnalyticsService {
   /**
    * Get analytics for all venues owned by a user
    */
-  async getOwnerDashboard(userId: string): Promise<{
+  async getOwnerDashboard(userId: string, userRole?: string): Promise<{
     venues: Array<{
       id: string;
       name: string;
@@ -299,8 +300,15 @@ export class AnalyticsService {
     };
   }> {
     const venues = await this.venueRepo.find({
-      where: { ownerId: userId },
-      relations: ['offers'],
+      where:
+        userRole === UserRole.ADMIN
+          ? {}
+          : {
+              owner: {
+                id: userId,
+              },
+            },
+      relations: ['offers', 'owner'],
     });
 
     const venueAnalytics = venues.map((venue) => {
