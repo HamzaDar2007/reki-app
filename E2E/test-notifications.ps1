@@ -12,6 +12,7 @@ Write-Host "1. Registering test users..." -ForegroundColor Yellow
 $user1Body = @{
     email = "user1_$(Get-Random -Minimum 1000 -Maximum 9999)@example.com"
     password = "Test123456"
+    role = "BUSINESS"
 } | ConvertTo-Json
 
 $user2Body = @{

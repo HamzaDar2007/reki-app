@@ -20,6 +20,12 @@ export class User {
   @Column({ unique: true })
   email: string;
 
+  @Column({ name: 'full_name', length: 160 })
+  fullName: string;
+
+  @Column({ length: 32 })
+  phone: string;
+
   @Column()
   passwordHash: string;
 

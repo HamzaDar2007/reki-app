@@ -76,6 +76,9 @@ export class UsersController {
       return users.map((user) => ({
         id: user.id,
         email: user.email,
+        fullName: user.fullName,
+        phone: user.phone,
+        role: user.role,
         isActive: user.isActive,
         preferences: user.preferences,
         createdAt: user.createdAt,
@@ -109,6 +112,9 @@ export class UsersController {
       return {
         id: user.id,
         email: user.email,
+        fullName: user.fullName,
+        phone: user.phone,
+        role: user.role,
         isActive: user.isActive,
         preferences: user.preferences,
         createdAt: user.createdAt,
@@ -148,6 +154,9 @@ export class UsersController {
       return {
         id: user.id,
         email: user.email,
+        fullName: user.fullName,
+        phone: user.phone,
+        role: user.role,
         isActive: user.isActive,
         preferences: user.preferences,
         createdAt: user.createdAt,

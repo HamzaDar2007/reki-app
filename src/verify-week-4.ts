@@ -40,10 +40,14 @@ async function bootstrap() {
     const owner = await usersService.create({
       email: ownerEmail,
       password: 'password123',
+      fullName: 'Test Owner',
+      phone: '+447900000001',
     });
     await usersService.create({
       email: hackerEmail,
       password: 'password123',
+      fullName: 'Test Hacker',
+      phone: '+447900000002',
     });
     console.log(`✅ Created Owner: ${ownerEmail}`);
     console.log(`✅ Created Hacker: ${hackerEmail}`);

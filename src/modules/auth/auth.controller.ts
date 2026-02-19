@@ -45,8 +45,10 @@ export class AuthController {
   @ApiResponse({ status: 500, description: 'Internal server error' })
   async register(@Body() dto: RegisterDto) {
     try {
-      if (!dto.email || !dto.password) {
-        throw new BadRequestException('Email and password are required');
+      if (!dto.email || !dto.password || !dto.fullName || !dto.phone) {
+        throw new BadRequestException(
+          'Email, password, fullName and phone are required',
+        );
       }
       if (dto.password.length < 6) {
         throw new BadRequestException(

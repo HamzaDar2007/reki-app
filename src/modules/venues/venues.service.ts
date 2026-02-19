@@ -40,6 +40,7 @@ export class VenuesService {
       const venue = this.venueRepo.create({
         ...dto,
         city: { id: dto.cityId },
+        ownerId,
         owner: ownerId ? { id: ownerId } : undefined,
       });
 

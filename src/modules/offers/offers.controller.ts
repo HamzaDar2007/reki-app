@@ -205,8 +205,11 @@ export class OffersController {
       if (!venue) {
         throw new NotFoundException(`Venue with ID ${dto.venueId} not found`);
       }
+
+      const venueOwnerId = venue.ownerId || venue.owner?.id;
+
       // Check ownership unless admin
-      if (user.role !== UserRole.ADMIN && venue.ownerId !== user.id) {
+      if (user.role !== UserRole.ADMIN && venueOwnerId !== user.id) {
         throw new ForbiddenException('You do not own this venue');
       }
       const offer = await this.offersService.create(dto);

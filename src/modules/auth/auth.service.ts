@@ -38,8 +38,10 @@ export class AuthService {
   ): Promise<{ user: User; access_token: string; refresh_token: string }> {
     try {
       // Validate input
-      if (!dto.email || !dto.password) {
-        throw new BadRequestException('Email and password are required');
+      if (!dto.email || !dto.password || !dto.fullName || !dto.phone) {
+        throw new BadRequestException(
+          'Email, password, fullName and phone are required',
+        );
       }
 
       // Check if user already exists
@@ -56,6 +58,8 @@ export class AuthService {
       const hash = await bcrypt.hash(dto.password, 10);
       const user = this.userRepo.create({
         email: dto.email,
+        fullName: dto.fullName,
+        phone: dto.phone,
         passwordHash: hash,
         role: dto.role || UserRole.USER, // Default to USER role
       });

@@ -14,6 +14,8 @@ export class NotificationsService {
   constructor(
     @InjectRepository(Notification)
     private readonly notificationRepo: Repository<Notification>,
+    @InjectRepository(User)
+    private readonly userRepo: Repository<User>,
     private readonly configService: ConfigService,
   ) {
     // Initialize email transporter
@@ -107,12 +109,10 @@ export class NotificationsService {
       this.logger.log(`=== NOTIFY OFFER AVAILABLE CALLED ===`);
       this.logger.log(`Offer: ${offerTitle} at ${venueName}`);
 
-      // Get all active users with preferences
-      const users = await this.notificationRepo.manager
-        .createQueryBuilder(User, 'user')
-        .leftJoinAndSelect('user.preferences', 'preferences')
-        .where('user."isActive" = :isActive', { isActive: true })
-        .getMany();
+      const users = await this.userRepo.find({
+        where: { isActive: true },
+        relations: ['preferences'],
+      });
 
       this.logger.log(`Found ${users.length} active users`);
 
@@ -219,18 +219,16 @@ export class NotificationsService {
     newBusyness: string,
   ): Promise<void> {
     try {
-      // Get users with busyness notifications enabled
-      const users = await this.notificationRepo.manager
-        .createQueryBuilder(User, 'user')
-        .leftJoinAndSelect('user.preferences', 'preferences')
-        .where('user.isActive = :isActive', { isActive: true })
-        .andWhere('preferences.notificationsEnabled = :enabled', {
-          enabled: true,
-        })
-        .andWhere('preferences.busynessNotifications = :busynessEnabled', {
-          busynessEnabled: true,
-        })
-        .getMany();
+      const users = await this.userRepo.find({
+        where: {
+          isActive: true,
+          preferences: {
+            notificationsEnabled: true,
+            busynessNotifications: true,
+          },
+        },
+        relations: ['preferences'],
+      });
 
       for (const user of users) {
         await this.create(
