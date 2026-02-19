@@ -9,6 +9,7 @@ import { Repository } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 import { User } from './entities/user.entity';
 import { UserPreferences } from './entities/user-preferences.entity';
+import { Venue } from '../venues/entities/venue.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginDto } from './dto/login.dto';
 import { UpdatePreferencesDto } from './dto/update-preferences.dto';
@@ -21,6 +22,8 @@ export class UsersService {
     private readonly userRepo: Repository<User>,
     @InjectRepository(UserPreferences)
     private readonly prefsRepo: Repository<UserPreferences>,
+    @InjectRepository(Venue)
+    private readonly venueRepo: Repository<Venue>,
   ) {}
 
   async create(dto: CreateUserDto): Promise<User> {
@@ -118,5 +121,18 @@ export class UsersService {
   async delete(id: string): Promise<void> {
     const user = await this.findById(id);
     await this.userRepo.remove(user);
+  }
+
+  async findVenuesByUserId(userId: string): Promise<Venue[]> {
+    const user = await this.findById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    return this.venueRepo.find({
+      where: { ownerId: userId },
+      relations: ['liveState', 'city', 'offers'],
+      order: { name: 'ASC' },
+    });
   }
 }

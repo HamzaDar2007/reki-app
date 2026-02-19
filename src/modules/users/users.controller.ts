@@ -24,6 +24,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { UpdatePreferencesDto } from './dto/update-preferences.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { GetUser } from '../auth/get-user.decorator';
+import { VenueResponseDto } from '../venues/dto/venue-response.dto';
 
 @ApiTags('users')
 @Controller('users')
@@ -187,6 +188,61 @@ export class UsersController {
       return { message: 'User deleted successfully' };
     } catch (error) {
       this.logger.error(`Failed to delete user ${id}:`, error);
+      throw error;
+    }
+  }
+
+  @Get(':id/venues')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get all venues owned by a user' })
+  @ApiResponse({ status: 200, type: [VenueResponseDto] })
+  @ApiResponse({ status: 400, description: 'Invalid user ID' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  @ApiResponse({ status: 500, description: 'Internal server error' })
+  async getUserVenues(@Param('id') userId: string): Promise<VenueResponseDto[]> {
+    try {
+      if (!userId || userId.trim() === '') {
+        throw new BadRequestException('User ID is required');
+      }
+      this.logger.log(`Fetching venues for user: ${userId}`);
+      const venues = await this.usersService.findVenuesByUserId(userId);
+
+      if (!venues) {
+        return [];
+      }
+
+      return venues.map((v) => {
+        const activeOffersCount = (v.offers || []).filter(
+          (o) => o.isActive,
+        ).length;
+
+        return {
+          id: v.id,
+          name: v.name,
+          category: v.category,
+          address: v.address,
+          postcode: v.postcode,
+          lat: v.lat ? Number(v.lat) : undefined,
+          lng: v.lng ? Number(v.lng) : undefined,
+          coverImageUrl: v.coverImageUrl,
+          galleryImages: v.galleryImages,
+          logoUrl: v.logoUrl,
+          description: v.description,
+          isActive: v.isActive,
+          ownerId: v.ownerId,
+          busyness: v.liveState?.busyness,
+          vibe: v.liveState?.vibe,
+          busynessUpdatedAt: v.liveState?.busynessUpdatedAt,
+          vibeUpdatedAt: v.liveState?.vibeUpdatedAt,
+          activeOffersCount,
+          createdAt: v.createdAt,
+          updatedAt: v.updatedAt,
+        };
+      });
+    } catch (error) {
+      this.logger.error(`Failed to fetch venues for user ${userId}:`, error);
       throw error;
     }
   }

@@ -14,6 +14,7 @@ export class VenueResponseDto {
   logoUrl?: string;
   description?: string;
   isActive: boolean;
+  ownerId?: string;
 
   // Live state information
   busyness: BusynessLevel;
